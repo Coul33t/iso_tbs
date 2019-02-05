@@ -43,20 +43,20 @@ class Engine:
         self.gamemap.create_default_terrain()
 
         for i in range(3, 6):
-            self.actors.append(Actor('soldier', 's', 0, 'south', color=TEAM_COLORS[0], x=i, y=1, movement=1,
+            self.actors.append(Actor('soldier', 's', 0, color=TEAM_COLORS[0], x=i, y=1, movement=1,
                                      stats=Stats(3,3,1)))
         for i in range(0, 10, 2):
-            self.actors.append(Actor('barbarian', 'b', 1, 'north', color=TEAM_COLORS[1], x=i, y=8, movement=2,
+            self.actors.append(Actor('barbarian', 'b', 1, color=TEAM_COLORS[1], x=i, y=8, movement=2,
                                      stats=Stats(3,2,0)))
 
 
-        self.actors.append(Actor('king', 'K', 0, 'south', color=TEAM_COLORS[0], x=4, y=0,
+        self.actors.append(Actor('king', 'K', 0, color=TEAM_COLORS[0], x=4, y=0,
                                  movement=2, stats=Stats(5,3,4)))
-        self.actors.append(Actor('leader', 'L', 1, 'north', color=TEAM_COLORS[1], x=4, y=9,
+        self.actors.append(Actor('leader', 'L', 1, color=TEAM_COLORS[1], x=4, y=9,
                                  movement=2, stats=Stats(7,4,2)))
 
-        self.actors.append(Actor('SOUPER', 'S', 1, 'north', color=TEAM_COLORS[2], x=5, y=5,
-                                 movement=10, stats=Stats(7,40,2)))
+        # self.actors.append(Actor('SOUPER', 'S', 2, 'north', color=TEAM_COLORS[2], x=5, y=5,
+        #                          movement=10, stats=Stats(7,40,2)))
 
         self.turn_to_take = self.actors.copy()
         self.turn_to_take.sort(key=lambda x: x.stats.agility, reverse=True)
@@ -118,10 +118,6 @@ class Engine:
             if key == 44:
                 self.game_state = 'end_turn'
 
-        # elif key in ACTION_KEY or key in MOVEMENT_KEYS:
-        #     print(key)
-        #     self.game_state = 'turn_taken'
-
 
     def mouse_check(self, coordinates):
         # Useful for map related stuff
@@ -176,10 +172,11 @@ class Engine:
                 blt.bkcolor(color)
                 blt.puts(x + offset.x, y + offset.y, '[font=terrain] [/font]')
 
+        blt.layer(0)
         # Legal moves for current actors
         self.highlighted_cases = self.get_possible_movement(self.unit_turn)
         for highlight in self.highlighted_cases:
-            color = 'pink'
+            color = 'turquoise'
             if highlight['valid'] == 'enemy':
                 color = 'red'
             if highlight['valid'] == 'false':
@@ -197,14 +194,14 @@ class Engine:
             blt.puts(y + 1, offset.y + self.gamemap.h, f'{chr(65 + y)}')
 
         # actors
-        blt.layer(1)
+        blt.layer(2)
 
         for actor in self.actors:
             blt.color(actor.color)
             blt.puts(actor.x + offset.x, actor.y + offset.y, actor.charac)
 
         # Text
-        blt.layer(2)
+        blt.layer(3)
         off_x = self.gamemap.w + self.gamemap.display_offset.x
         off_y = self.gamemap.h + self.gamemap.display_offset.y
         blt.color('white')
@@ -264,7 +261,7 @@ class Engine:
         # If everybody took its turn, then new turn: the list containing
         # actors and order is recomputed
         if not self.turn_to_take:
-            self.turn_to_take = self.actors.copy()
+            self.turn_to_take = [a for a in self.actors if not a.dead]
             self.turn_to_take.sort(key=lambda x: x.stats.agility, reverse=True)
 
         # Non-blocking input
@@ -291,14 +288,18 @@ class Engine:
             # Once the event was processed, remove it so we don't process it twice
             self.event_queue.remove(event)
 
-            # If the turn is over, switch to the next unit
-            if self.game_state == 'end_turn':
-                self.unit_turn.end_turn()
+        self.unit_turn.check_end()
 
+        # If the turn is over, switch to the next unit
+        if self.unit_turn.has_played or self.game_state == 'end_turn':
+            self.game_state = 'new_turn'
+            self.unit_turn.end_turn()
+
+            self.unit_turn = self.turn_to_take.pop(0)
+            while self.unit_turn.dead:
                 self.unit_turn = self.turn_to_take.pop(0)
 
-                self.unit_turn.new_turn()
-                self.game_state = 'new_turn'
+            self.unit_turn.new_turn()
 
 
 if __name__ == '__main__':
