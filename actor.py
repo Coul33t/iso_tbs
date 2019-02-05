@@ -14,7 +14,7 @@ class Stats:
         self.defence = round(strength * 0.15 + agility * 0.2 + intel * 0.05)
 
 class Actor:
-    def __init__(self, name, charac, team, facing, color='blue', x=0, y=0, movement=3, stats=None, main_attribute='None'):
+    def __init__(self, name, charac, team, color='blue', x=0, y=0, movement=3, stats=None, main_attribute='None'):
         self.name = name
         self.charac = charac
         self.team = team
@@ -71,13 +71,20 @@ class Actor:
                 self.xp = self.xp - self.next_level
                 self.next_level = self.next_level + 50 * (self.level - 1)
 
+    def check_end(self):
+        if self.movement_left == 0 and self.has_attacked:
+            self.has_played = True
+
+
     def end_turn(self):
         self.color = self.perma_color
+        self.has_played = True
 
     def new_turn(self):
         self.color = ACTIVE_COLOR
         self.movement_left = self.movement
         self.has_attacked = False
+        self.has_played = False
 
     def attack(self, other_actor):
 
