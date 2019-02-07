@@ -1,20 +1,9 @@
-from constants import ACTIVE_COLOR
-
-class Stats:
-    def __init__(self, strength=1, agility=1, intel=1, strength_growth=0.33, agility_growth=0.33, intel_growth=0.33):
-        self.strength = strength
-        self.agility = agility
-        self.intel = intel
-
-        self.strength_growth = strength_growth
-        self.agility_growth = agility_growth
-        self.intel_growth = intel_growth
-
-        self.hp = round(strength * 2 + agility * 1.5 + intel * 0.5)
-        self.defence = round(strength * 0.15 + agility * 0.2 + intel * 0.05)
+from constants import ACTIVE_COLOR, ABBR
+from stats import Stats
+from inventory import Inventory
 
 class Actor:
-    def __init__(self, name, charac, team, color='blue', x=0, y=0, movement=3, stats=None, main_attribute='None'):
+    def __init__(self, name, charac, team, color='blue', x=0, y=0, movement=3, stats=None, inventory=None):
         self.name = name
         self.charac = charac
         self.team = team
@@ -40,10 +29,13 @@ class Actor:
         if not stats:
             self.stats = Stats()
 
-        self.main_attribute = main_attribute
-
         self.xp = 0
         self.next_level = 100
+
+        self.inventory = inventory
+        if not inventory:
+            self.inventory = Inventory()
+        self.inventory.owner = self
 
     def __str__(self):
         return_string = f'Name : {self.name} -> {self.charac}\n'
@@ -52,11 +44,33 @@ class Actor:
         return_string += f'XP to next level: {self.next_level - self.xp}\n'
         return_string += f'Movement: up to {self.movement} tiles\n'
 
-        return_string += '\nStats:\n'
-        for stat, value in vars(self.stats).items():
-            return_string += f'{stat} : {value}\n'
+        # Broken rn because of Stats changes
+        # return_string += '\nStats:\n'
+        # for stat, value in vars(self.stats).items():
+        #     return_string += f'{stat} : {value}\n'
 
         return return_string
+
+
+    def recompute_mods(self):
+        mods = {'damage': 0, 'defence': 0}
+        for item in self.inventory:
+            for stat, mod in item.get_mods():
+                if stat in mods:
+                    mods[stat] += mod
+                else:
+                    mods[stat] = mod
+            if item.weapon:
+                mods['damage'] += item.weapon.damage
+
+            if item.amor:
+                mods['defence'] += item.armor.defence
+
+        for stat, mod in mods.items():
+            self.stats.mod[stat] = self.stats.base[stat] + mod
+
+        self.stats.mod['damage'] = self.stats.mod['damage'] + mods['damage']
+        self.stats.mod['defence'] = self.stats.mod['defence'] + mods['defence']
 
     def check_level(self):
         if self.xp >= self.next_level:
@@ -93,15 +107,12 @@ class Actor:
 
         self.has_attacked = True
 
-        damage = round(self.stats.strength - other_actor.stats.defence)
-
-        if self.main_attribute != 'None':
-            damage += self.stats[self.main_attribute]
+        damage = self.stats.mod['damage']
 
         if damage > 0:
-            other_actor.stats.hp -= damage
+            other_actor.stats.mod['hp'] -= damage
 
-            if other_actor.stats.hp <= 0:
+            if other_actor.stats.mod['hp'] <= 0:
                 other_actor.die()
 
             return f'The {self.name} did {damage} damage to the {other_actor.name}!'

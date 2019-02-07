@@ -15,3 +15,5 @@ TEAM_COLORS = ['blue', 'red', 'green', 'yellow']
 ACTIVE_COLOR = 'green'
 
 KEY = {'tab': 43}
+
+ABBR = {'strength': 'str', 'agility': 'agi', 'intel': 'int', 'defence': 'def', 'hp': 'HP'}

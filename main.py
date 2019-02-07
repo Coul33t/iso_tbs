@@ -55,11 +55,11 @@ class Engine:
         self.actors.append(Actor('leader', 'L', 1, color=TEAM_COLORS[1], x=4, y=9,
                                  movement=2, stats=Stats(7,4,2)))
 
-        # self.actors.append(Actor('SOUPER', 'S', 2, color=TEAM_COLORS[2], x=5, y=5,
-        #                          movement=10, stats=Stats(7,40,2)))
+        self.actors.append(Actor('SOUPER', 'S', 2, color=TEAM_COLORS[2], x=5, y=5,
+                                 movement=10, stats=Stats(7,40,2)))
 
         self.turn_to_take = self.actors.copy()
-        self.turn_to_take.sort(key=lambda x: x.stats.agility, reverse=True)
+        self.turn_to_take.sort(key=lambda x: x.stats.mod['agility'], reverse=True)
         self.unit_turn = self.turn_to_take.pop(0)
         self.unit_turn.new_turn()
         self.game_state = 'new_turn'
@@ -212,12 +212,12 @@ class Engine:
         blt.bkcolor('black')
         blt.puts(off_x + 2, 1, f'[font=text]{self.unit_turn.perma_color} {self.unit_turn.name}[/font]')
 
-        blt.puts(off_x + 2, 3, f'HP: {self.unit_turn.stats.hp}')
+        blt.puts(off_x + 2, 3, f"HP: {self.unit_turn.stats.mod['hp']}")
 
-        blt.puts(off_x + 2, 5, f'Str: {self.unit_turn.stats.strength}')
-        blt.puts(off_x + 2, 6, f'Agi: {self.unit_turn.stats.agility}')
-        blt.puts(off_x + 2, 7, f'Int: {self.unit_turn.stats.intel}')
-        blt.puts(off_x + 10, 5, f'Def: {self.unit_turn.stats.defence}')
+        blt.puts(off_x + 2, 5, f"Str: {self.unit_turn.stats.mod['strength']}")
+        blt.puts(off_x + 2, 6, f"Agi: {self.unit_turn.stats.mod['agility']}")
+        blt.puts(off_x + 2, 7, f"Int: {self.unit_turn.stats.mod['intel']}")
+        blt.puts(off_x + 10, 5, f"Def: {self.unit_turn.stats.mod['defence']}")
 
 
         blt.puts(TERMINAL_SIZE_X - 8, TERMINAL_SIZE_Y - 6, 'End turn')
@@ -233,7 +233,7 @@ class Engine:
         # actors and order is recomputed
         if not self.turn_to_take:
             self.turn_to_take = [a for a in self.actors if not a.dead]
-            self.turn_to_take.sort(key=lambda x: x.stats.agility, reverse=True)
+            self.turn_to_take.sort(key=lambda x: x.stats.mod['agility'], reverse=True)
 
         # Non-blocking input
         while blt.has_input():
