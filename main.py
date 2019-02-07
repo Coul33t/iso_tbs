@@ -55,12 +55,12 @@ class Engine:
         self.actors.append(Actor('leader', 'L', 1, color=TEAM_COLORS[1], x=4, y=9,
                                  movement=2, stats=Stats(7,4,2)))
 
-        # self.actors.append(Actor('SOUPER', 'S', 2, 'north', color=TEAM_COLORS[2], x=5, y=5,
+        # self.actors.append(Actor('SOUPER', 'S', 2, color=TEAM_COLORS[2], x=5, y=5,
         #                          movement=10, stats=Stats(7,40,2)))
 
         self.turn_to_take = self.actors.copy()
         self.turn_to_take.sort(key=lambda x: x.stats.agility, reverse=True)
-        self.unit_turn = self.turn_to_take[0]
+        self.unit_turn = self.turn_to_take.pop(0)
         self.unit_turn.new_turn()
         self.game_state = 'new_turn'
 
@@ -195,8 +195,12 @@ class Engine:
 
         # actors
         blt.layer(2)
-
-        for actor in self.actors:
+        # First, the daed actors, so that they are below the living ones
+        for actor in [a for a in self.actors if a.dead]:
+            blt.color(actor.color)
+            blt.puts(actor.x + offset.x, actor.y + offset.y, actor.charac)
+        # Then the living ones
+        for actor in [a for a in self.actors if not a.dead]:
             blt.color(actor.color)
             blt.puts(actor.x + offset.x, actor.y + offset.y, actor.charac)
 
@@ -219,45 +223,12 @@ class Engine:
         blt.puts(TERMINAL_SIZE_X - 8, TERMINAL_SIZE_Y - 6, 'End turn')
 
         if self.message_queue:
-            # TODO: get total ength of 5 last messages
-            # If > 5 lines, then take one less, etc.
-            # i = 5
-            # last_five_messages = self.message_queue[-5:]
-
-            # for mess in reversed(last_five_messages):
-
-            #     mess_len = len(mess) / MESSAGE_PANEL_W
-            #     if len(mess) > 1:
-            #         i -= ceil(mess_len - 1)
-
-            # messages_to_display = []
-            # while i > 0:
-            #     messages_to_display.append(last_five_messages[i])
-            #     i -= 1
-
-            # print(messages_to_display)
             blt.puts(MESSAGE_PANEL_X, MESSAGE_PANEL_Y,
                      self.message_queue[-1], MESSAGE_PANEL_W, MESSAGE_PANEL_H, blt.TK_ALIGN_LEFT)
-
-
-            # while i > 0:
-            #     if i > len(self.message_queue):
-            #         i = len(self.message_queue)
-
-            #     i -= 1
-            #     message = self.message_queue[:-i]
-            #     mess_len = len(message) / MESSAGE_PANEL_W
-
-            #     if mess_len > 1:
-            #         i -= ceil(mess_len - 1)
-
-            #     blt.puts(MESSAGE_PANEL_X, MESSAGE_PANEL_Y + 4 - i,
-            #              message, MESSAGE_PANEL_W, MESSAGE_PANEL_H, blt.TK_ALIGN_LEFT)
 
         self.re_render = False
 
     def update(self):
-
         # If everybody took its turn, then new turn: the list containing
         # actors and order is recomputed
         if not self.turn_to_take:
