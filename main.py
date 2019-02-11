@@ -1,4 +1,4 @@
-from math import ceil
+from math import ceil, floor
 from bearlibterminal import terminal as blt
 import tdl
 
@@ -32,8 +32,11 @@ class Engine:
 
     def init_terminal(self):
         blt.open()
-        blt.set(f"window.size={TERMINAL_SIZE_X}x{TERMINAL_SIZE_Y}, window.cellsize=48x48")
-        blt.set("font: res/tilesets/Curses_square_24.png, size=24x24, resize=48x48")
+        blt.set(f"""window.size={TERMINAL_SIZE_X}x{TERMINAL_SIZE_Y},
+                    window.cellsize={TERMINAL_CELL_SIZE_X}x{TERMINAL_CELL_SIZE_Y},
+                    resizeable=true, minimum-size={TERMINAL_SIZE_X}x{TERMINAL_SIZE_Y}""")
+        blt.set("font: res/fonts/VeraMono.ttf, size=12x24, spacing=1x1")
+        blt.set("terrain font: res/tilesets/Curses_square_24.png, size=24x24, codepage=437, spacing=2x1")
         blt.set("window.title='SimplyRL'")
         blt.set("input.filter={keyboard, mouse+}")
         blt.composition(True)
@@ -121,7 +124,8 @@ class Engine:
 
     def mouse_check(self, coordinates):
         # Useful for map related stuff
-        offseted_coordinates = Point(coordinates[0] - self.gamemap.display_offset.x, coordinates[1] - self.gamemap.display_offset.y)
+        offseted_coordinates = Point(floor((coordinates[0] / TERRAIN_SIZE_X) - self.gamemap.display_offset.x),
+                                     floor((coordinates[1] / TERRAIN_SIZE_Y) - self.gamemap.display_offset.y))
 
         # Moving on an empty case if there are some movement left
         if self.unit_turn.movement_left > 0 and point_in(offseted_coordinates, [x['mov'] for x in self.highlighted_cases if x['valid'] == 'true']):
@@ -170,7 +174,7 @@ class Engine:
                     color = 'grey'
 
                 blt.bkcolor(color)
-                blt.puts(x + offset.x, y + offset.y, '[font=terrain] [/font]')
+                blt.puts((x + offset.x) * TERRAIN_SIZE_X, (y + offset.y) * TERRAIN_SIZE_Y, '[font=terrain] [/font]')
 
         blt.layer(0)
         # Legal moves for current actors
@@ -182,42 +186,45 @@ class Engine:
             if highlight['valid'] == 'false':
                 color = 'amber'
             blt.bkcolor(color)
-            blt.puts(highlight['mov'].x + offset.x, highlight['mov'].y + offset.y, '[font=terrain] [/font]')
+            blt.puts((highlight['mov'].x + offset.x) * TERRAIN_SIZE_X,
+                     (highlight['mov'].y + offset.y) * TERRAIN_SIZE_Y, '[font=terrain] [/font]')
 
         # Coordinates
         blt.bkcolor('black')
 
         for y in range(10):
-            blt.puts(0, y + offset.y, f'{str(y)}')
-            blt.puts(self.gamemap.h + 1, y + offset.y, f'{str(y)}')
-            blt.puts(y + 1, offset.y - 1, f'{chr(65 + y)}')
-            blt.puts(y + 1, offset.y + self.gamemap.h, f'{chr(65 + y)}')
+            blt.puts(0, (y + offset.y) * TERRAIN_SIZE_Y, f'[font=terrain]{str(y)}[/font]')
+            blt.puts((self.gamemap.h + 1) * TERRAIN_SIZE_X, (y + offset.y) * TERRAIN_SIZE_Y, f'[font=terrain]{str(y)}[/font]')
+            blt.puts((y + 1) * TERRAIN_SIZE_X, (offset.y - 1) * TERRAIN_SIZE_Y, f'[font=terrain]{chr(65 + y)}[/font]')
+            blt.puts((y + 1) * TERRAIN_SIZE_X, (offset.y + self.gamemap.h) * TERRAIN_SIZE_Y, f'[font=terrain]{chr(65 + y)}[/font]')
 
         # actors
         blt.layer(2)
         # First, the daed actors, so that they are below the living ones
         for actor in [a for a in self.actors if a.dead]:
             blt.color(actor.color)
-            blt.puts(actor.x + offset.x, actor.y + offset.y, actor.charac)
+            blt.puts((actor.x + offset.x) * TERRAIN_SIZE_X,
+                     (actor.y + offset.y) * TERRAIN_SIZE_Y, actor.charac)
         # Then the living ones
         for actor in [a for a in self.actors if not a.dead]:
             blt.color(actor.color)
-            blt.puts(actor.x + offset.x, actor.y + offset.y, actor.charac)
+            blt.puts(((actor.x + offset.x) * TERRAIN_SIZE_X),
+                      (actor.y + offset.y) * TERRAIN_SIZE_Y, f'[offset={TERMINAL_CELL_SIZE_X/2},0]{actor.charac}[/offset]')
 
         # Text
         blt.layer(3)
-        off_x = self.gamemap.w + self.gamemap.display_offset.x
-        off_y = self.gamemap.h + self.gamemap.display_offset.y
+        off_x = (self.gamemap.w + self.gamemap.display_offset.x) * TERRAIN_SIZE_X
+        off_y = (self.gamemap.h + self.gamemap.display_offset.y) * TERRAIN_SIZE_Y
         blt.color('white')
         blt.bkcolor('black')
-        blt.puts(off_x + 2, 1, f'[font=text]{self.unit_turn.perma_color} {self.unit_turn.name}[/font]')
+        blt.puts(off_x + 4, 1, f'[font=text]{self.unit_turn.perma_color} {self.unit_turn.name}[/font]')
 
-        blt.puts(off_x + 2, 3, f"HP: {self.unit_turn.stats.mod['hp']}")
+        blt.puts(off_x + 4, 3, f"[font=text]HP: {self.unit_turn.stats.mod['hp']}[/font]")
 
-        blt.puts(off_x + 2, 5, f"Str: {self.unit_turn.stats.mod['strength']}")
-        blt.puts(off_x + 2, 6, f"Agi: {self.unit_turn.stats.mod['agility']}")
-        blt.puts(off_x + 2, 7, f"Int: {self.unit_turn.stats.mod['intel']}")
-        blt.puts(off_x + 10, 5, f"Def: {self.unit_turn.stats.mod['defence']}")
+        blt.puts(off_x + 4, 5, f"[font=text]Str: {self.unit_turn.stats.mod['strength']}[/font]")
+        blt.puts(off_x + 4, 6, f"[font=text]Agi: {self.unit_turn.stats.mod['agility']}[/font]")
+        blt.puts(off_x + 4, 7, f"[font=text]Int: {self.unit_turn.stats.mod['intel']}[/font]")
+        blt.puts(off_x + 14, 5, f"[font=text]Def: {self.unit_turn.stats.mod['defence']}[/font]")
 
 
         blt.puts(TERMINAL_SIZE_X - 8, TERMINAL_SIZE_Y - 6, 'End turn')
