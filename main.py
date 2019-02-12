@@ -25,6 +25,8 @@ class Engine:
 
         self.re_render = True
 
+        self.under_mouse = None
+
         self.init_game()
 
         self.game_state = 'menu'
@@ -133,8 +135,7 @@ class Engine:
             self.unit_turn.movement_left -= dst_man(Point(self.unit_turn.x, self.unit_turn.y),
                                                     Point(offseted_coordinates.x,  offseted_coordinates.y))
 
-            message = f'''Moved from {chr(self.unit_turn.x + 65)}{self.unit_turn.y} to
-                                     {chr(offseted_coordinates.x + 65)}{offseted_coordinates.y}'''
+            message = f'Moved from {chr(self.unit_turn.x + 65)}{self.unit_turn.y} to {chr(offseted_coordinates.x + 65)}{offseted_coordinates.y}'
 
             self.unit_turn.x = offseted_coordinates.x
             self.unit_turn.y = offseted_coordinates.y
@@ -153,10 +154,33 @@ class Engine:
         elif coordinates in [(x, TERMINAL_SIZE_Y - 6) for x in range(TERMINAL_SIZE_X - 8, TERMINAL_SIZE_X)]:
             self.game_state = 'end_turn'
 
+    def check_under_mouse(self):
+        self.under_mouse = None
+
+        mx = blt.state(blt.TK_MOUSE_X)
+        my = blt.state(blt.TK_MOUSE_Y)
+        off_mouse = Point(floor((mx / TERRAIN_SIZE_X) - self.gamemap.display_offset.x),
+                                     floor((my / TERRAIN_SIZE_Y) - self.gamemap.display_offset.y))
+
+        for a in self.actors:
+            if a != self.unit_turn and a.x == off_mouse.x and a.y == off_mouse.y:
+                self.under_mouse = a
+
+    def render_stats(self, x_base, y_base, unit):
+        blt.puts(x_base, y_base, f'[font=text]{unit.perma_color} {unit.name}[/font]')
+
+        blt.puts(x_base, y_base + 2, f"[font=text]HP: {unit.stats.mod['hp']}[/font]")
+
+        blt.puts(x_base, y_base + 4, f"[font=text]Str: {unit.stats.mod['strength']}[/font]")
+        blt.puts(x_base, y_base + 5, f"[font=text]Agi: {unit.stats.mod['agility']}[/font]")
+        blt.puts(x_base, y_base + 6, f"[font=text]Int: {unit.stats.mod['intel']}[/font]")
+        blt.puts(x_base, y_base + 7, f"[font=text]Def: {unit.stats.mod['defence']}[/font]")
+
     def render(self):
         # No need to render endlessly
-        if not self.re_render:
-            return
+        # EDIT: Actually now I need it
+        # if not self.re_render:
+        #     return
 
         blt.clear()
 
@@ -217,14 +241,10 @@ class Engine:
         off_y = (self.gamemap.h + self.gamemap.display_offset.y) * TERRAIN_SIZE_Y
         blt.color('white')
         blt.bkcolor('black')
-        blt.puts(off_x + 4, 1, f'[font=text]{self.unit_turn.perma_color} {self.unit_turn.name}[/font]')
+        self.render_stats(off_x + 4, 1, self.unit_turn)
 
-        blt.puts(off_x + 4, 3, f"[font=text]HP: {self.unit_turn.stats.mod['hp']}[/font]")
-
-        blt.puts(off_x + 4, 5, f"[font=text]Str: {self.unit_turn.stats.mod['strength']}[/font]")
-        blt.puts(off_x + 4, 6, f"[font=text]Agi: {self.unit_turn.stats.mod['agility']}[/font]")
-        blt.puts(off_x + 4, 7, f"[font=text]Int: {self.unit_turn.stats.mod['intel']}[/font]")
-        blt.puts(off_x + 14, 5, f"[font=text]Def: {self.unit_turn.stats.mod['defence']}[/font]")
+        if self.under_mouse:
+            self.render_stats(off_x + 19, 1, self.under_mouse)
 
 
         blt.puts(TERMINAL_SIZE_X - 8, TERMINAL_SIZE_Y - 6, 'End turn')
@@ -236,6 +256,7 @@ class Engine:
         self.re_render = False
 
     def update(self):
+        self.check_under_mouse()
         # If everybody took its turn, then new turn: the list containing
         # actors and order is recomputed
         if not self.turn_to_take:
