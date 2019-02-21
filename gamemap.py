@@ -8,16 +8,15 @@ class Tile:
 
 
 class GameMap:
-    def __init__(self, terrain=[], display_offset=Point(1,2)):
+    def __init__(self, terrain=[]):
         self.terrain = terrain
-        self.display_offset = display_offset
         self.w = 0
         self.h = 0
 
     def create_default_terrain(self):
-        for y in range(10):
+        for y in range(20):
             new_row = []
-            for x in range(10):
+            for x in range(20):
                 color = 'white'
 
                 if (y%2 == 0 and x%2 == 1) or (y%2 == 1 and x%2 == 0):
