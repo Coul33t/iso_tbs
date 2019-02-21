@@ -3,10 +3,13 @@ from stats import Stats
 from inventory import Inventory
 
 class Actor:
-    def __init__(self, name, charac, team, color='blue', x=0, y=0, movement=3, stats=None, inventory=None):
+    def __init__(self, name, charac, team, sprite=None, color='blue', x=0, y=0, movement=3, stats=None, inventory=None):
         self.name = name
         self.charac = charac
         self.team = team
+
+        self.sprite = sprite
+
         self.color = color
         self.perma_color = color
         self.x = x
