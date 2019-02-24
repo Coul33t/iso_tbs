@@ -207,7 +207,7 @@ class Engine:
     def render_stats(self, x_base, y_base, unit):
         blt.puts(x_base, y_base, f'[font=text]{unit.perma_color} {unit.name}[/font]')
 
-        blt.puts(x_base, y_base + 2, f"[font=text]HP: {unit.stats.mod['hp']}[/font]")
+        blt.puts(x_base, y_base + 2, f"[font=text]HP: {unit.stats.mod['hp']}/{unit.stats.base['max_hp']}[/font]")
 
         blt.puts(x_base, y_base + 4, f"[font=text]Str: {unit.stats.mod['strength']}[/font]")
         blt.puts(x_base, y_base + 5, f"[font=text]Agi: {unit.stats.mod['agility']}[/font]")

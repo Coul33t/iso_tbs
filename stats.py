@@ -20,6 +20,8 @@ class Stats:
         self.growth['intel'] = intel_growth
 
         self.base['hp'] = round(strength * 2 + agility * 1 + intel * 0.5)
+        self.base['max_hp'] = self.base['hp']
+        
         self.base['defence'] = round(strength * 0.15 + agility * 0.2 + intel * 0.05)
 
         self.mod['hp'] = self.base['hp']
