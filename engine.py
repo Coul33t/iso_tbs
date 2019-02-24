@@ -155,6 +155,9 @@ class Engine:
             if dst_man(Point(self.unit_turn.x, self.unit_turn.y), Point(other_actor.x, other_actor.y)) == 1:
                 self.message_queue.append(self.unit_turn.attack(other_actor))
 
+                # The unit lose half (floored) of its remaining movement
+                self.unit_turn.movement_left = floor(self.unit_turn.movement_left / 2)
+
         # Ending turn
         elif coordinates in [(x, TERMINAL_SIZE_Y - 6) for x in range(TERMINAL_SIZE_X - 8, TERMINAL_SIZE_X)]:
             self.game_state = 'end_turn'
