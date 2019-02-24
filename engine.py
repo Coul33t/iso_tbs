@@ -47,6 +47,7 @@ class Engine:
         blt.refresh()
 
     def init_game(self):
+        # self.gamemap.load_map_from_json('res/map/test_map.json')
         self.gamemap.create_default_terrain()
 
         for i in range(3, 6):
@@ -254,13 +255,8 @@ class Engine:
 
         # Board drawing
         for y, row in enumerate(self.gamemap.terrain):
-            for x, _ in enumerate(row):
-                color = 'white'
-
-                if (y%2 == 0 and x%2 == 1) or (y%2 == 1 and x%2 == 0):
-                    color = 'grey'
-
-                blt.bkcolor(color)
+            for x, tile in enumerate(row):
+                blt.bkcolor(tile.color)
                 blt.puts((x + self.map_offset.x) * TERRAIN_SCALE_X, (y + self.map_offset.y) * TERRAIN_SCALE_Y, '[font=terrain] [/font]')
 
         blt.layer(0)

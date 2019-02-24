@@ -1,5 +1,9 @@
+import json
+
 from tools import Point
 
+# tmp
+COLORS = {'~': 'blue', 'T': 'green', '.': 'yellow'}
 class Tile:
     def __init__(self, color, charac=' ', properties=[]):
         self.color = color
@@ -27,3 +31,16 @@ class GameMap:
 
         self.w = len(self.terrain[0])
         self.h = len(self.terrain)
+
+    def load_map_from_json(self, path):
+        with open(path, 'r') as jso:
+            gmap = json.load(jso)[3]
+
+            for row in gmap:
+                new_row = []
+                for x, char in enumerate(row):
+                    new_row.append(Tile(COLORS[char]))
+                self.terrain.append(new_row)
+
+            self.w = len(self.terrain[0])
+            self.h = len(self.terrain)
