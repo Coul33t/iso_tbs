@@ -40,7 +40,11 @@ class Engine:
                     resizeable=true, minimum-size={TERMINAL_SIZE_X}x{TERMINAL_SIZE_Y}""")
         blt.set("font: res/fonts/VeraMono.ttf, size=12x24, spacing=1x1")
         blt.set("terrain font: res/tilesets/Curses_square_24.png, size=24x24, codepage=437, spacing=2x1")
-        blt.set("U+E100: res/tilesets/test_tiles.png, size=32x32")
+        blt.set("U+E100: res/character/soldier_24.png, size=24x24")
+        blt.set("U+E101: res/character/mercenary_24.png, size=24x24")
+        blt.set("U+E102: res/character/echoes-map-skogul.png, size=32x32")
+        blt.set("U+E103: res/character/echoes-map-spartan.png, size=32x32")
+        blt.set("U+E104: res/character/echoes-map-conqueror.png, size=32x32")
         blt.set("window.title='SimplyRL'")
         blt.set("input.filter={keyboard, mouse+}")
         blt.composition(True)
@@ -51,19 +55,19 @@ class Engine:
         self.gamemap.create_default_terrain()
 
         for i in range(3, 6):
-            self.actors.append(Actor('soldier', 's', 0, color=TEAM_COLORS[0], x=i, y=1, movement=1,
+            self.actors.append(Actor('soldier', 's', 0, sprite=0xE100, color=TEAM_COLORS[0], x=i, y=1, movement=1,
                                      stats=Stats(3,3,1)))
         for i in range(0, 10, 2):
-            self.actors.append(Actor('barbarian', 'b', 1, color=TEAM_COLORS[1], x=i, y=8, movement=2,
+            self.actors.append(Actor('barbarian', 'b', 1, sprite=0xE101, color=TEAM_COLORS[1], x=i, y=8, movement=2,
                                      stats=Stats(3,2,0)))
 
 
-        self.actors.append(Actor('king', 'K', 0, sprite=0xE100+10, color=TEAM_COLORS[0], x=4, y=0,
+        self.actors.append(Actor('king', 'K', 0, sprite=0xE102, color=TEAM_COLORS[0], x=4, y=0,
                                  movement=2, stats=Stats(5,3,4)))
-        self.actors.append(Actor('leader', 'L', 1, color=TEAM_COLORS[1], x=4, y=9,
+        self.actors.append(Actor('leader', 'L', 1, sprite=0xE103, color=TEAM_COLORS[1], x=4, y=9,
                                  movement=2, stats=Stats(7,4,2)))
 
-        self.actors.append(Actor('Xander', 'S', 2, color=TEAM_COLORS[2], x=5, y=5,
+        self.actors.append(Actor('Xander', 'S', 2, sprite=0xE104, color=TEAM_COLORS[2], x=5, y=5,
                                  movement=10, stats=Stats(7,40,2)))
 
         self.turn_to_take = self.actors.copy()
@@ -284,15 +288,20 @@ class Engine:
         # actors
         blt.layer(2)
         # First, the daed actors, so that they are below the living ones
-        for actor in [a for a in self.actors if a.dead]:
-            blt.color(actor.color)
-            blt.puts((actor.x + self.map_offset.x) * TERRAIN_SCALE_X,
-                     (actor.y + self.map_offset.y) * TERRAIN_SCALE_Y, actor.charac)
+        # for actor in [a for a in self.actors if a.dead]:
+        #     blt.color(actor.color)
+        #     blt.puts((actor.x + self.map_offset.x) * TERRAIN_SCALE_X,
+        #              (actor.y + self.map_offset.y) * TERRAIN_SCALE_Y, actor.charac)
+
         # Then the living ones
         for actor in [a for a in self.actors if not a.dead]:
-            blt.color(actor.color)
-            blt.puts(((actor.x + self.map_offset.x) * TERRAIN_SCALE_X),
-                      (actor.y + self.map_offset.y) * TERRAIN_SCALE_Y, f'[offset={TERMINAL_CELL_SIZE_X/2},0]{actor.charac}[/offset]')
+            if actor.sprite:
+                blt.put_ext((actor.x + self.map_offset.x) * TERRAIN_SCALE_X,
+                            (actor.y + self.map_offset.y) * TERRAIN_SCALE_Y, 0, 0, actor.sprite)
+            else:
+                blt.color(actor.color)
+                blt.puts(((actor.x + self.map_offset.x) * TERRAIN_SCALE_X),
+                          (actor.y + self.map_offset.y) * TERRAIN_SCALE_Y, f'[offset={TERMINAL_CELL_SIZE_X/2},0]{actor.charac}[/offset]')
 
         # Text
         blt.layer(3)
