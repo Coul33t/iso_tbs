@@ -18,9 +18,9 @@ class GameMap:
         self.h = 0
 
     def create_default_terrain(self):
-        for y in range(20):
+        for y in range(10):
             new_row = []
-            for x in range(20):
+            for x in range(10):
                 color = 'white'
 
                 if (y%2 == 0 and x%2 == 1) or (y%2 == 1 and x%2 == 0):
