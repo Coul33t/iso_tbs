@@ -38,7 +38,7 @@ class Engine:
 
     def init_display(self):
         pygame.init()
-        self.window = pygame.display.set_mode((WINDOW_X_SIZE, WINDOW_Y_SIZE))
+        self.window = pygame.display.set_mode((WINDOW_SIZE.pv_w, WINDOW_SIZE.pv_h))
         pygame.display.set_caption('Iso TBS')
 
 
@@ -163,8 +163,28 @@ class Engine:
             if a != self.unit_turn and a.x == off_mouse.x and a.y == off_mouse.y:
                 self.under_mouse = a
 
+    def blit_debug(self, surface, color, screen, alpha=128):
+        to_blit = pygame.Surface((surface.pv_w, surface.pv_h))
+        to_blit.set_alpha(alpha)
+        to_blit.fill(color)
+        screen.blit(to_blit, (surface.pv_x, surface.pv_y))
+
     def render(self):
-        pass
+        if DEBUG:
+            red = pygame.Color(255,0,0)
+            green = pygame.Color(0,255,0)
+            blue = pygame.Color(0,0,255)
+            yellow = pygame.Color(255,255,0)
+            black = pygame.Color(0,0,0)
+            white = pygame.Color(255,255,255)
+
+            self.blit_debug(WINDOW_SIZE, white, self.window, alpha=64)
+            self.blit_debug(MAP_PANEL, blue, self.window, alpha=64)
+            self.blit_debug(MESSAGE_PANEL, red, self.window, alpha=64)
+            self.blit_debug(STATS_PANEL, green, self.window, alpha=64)
+            self.blit_debug(STATS_ENEMY_PANEL, yellow, self.window, alpha=64)
+            self.blit_debug(BUTTONS_PANEL, black, self.window, alpha=64)
+
 
     def update(self):
         # If everybody took its turn, then new turn: the list containing

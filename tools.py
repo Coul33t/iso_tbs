@@ -11,25 +11,42 @@ class Point:
 
 # Do I really need to put some docstring for this?
 class Rect:
-    def __init__(self, x, y, w, h):
+    def __init__(self, x, y, w, h, size_x, size_y):
         self.x = x
         self.y = y
         self.w = w
         self.h = h
-        # Because this will be easier to use
-        # Top left corner
-        self.top_left = Point(x, y)
-        # Top right
-        self.top_right = Point(x+w, y)
-        # Bottom right corner
-        self.bottom_right = Point(x+w, y+h)
-        # Bottom left corner
-        self.bottom_left = Point(x, y+h)
 
+        # Because this will be easier to use
         self.top = y
         self.left = x
         self.bottom = y+h
         self.right = x+w
+
+        self.top_left = Point(self.left, self.top)
+        self.top_right = Point(self.right, self.top)
+        self.bottom_right = Point(self.right, self.bottom)
+        self.bottom_left = Point(self.left, self.bottom)
+
+
+
+        # Pixels values (true value for the window)
+        self.pv_x = x * size_x
+        self.pv_y = y * size_y
+        self.pv_w = w * size_x
+        self.pv_h = h * size_y
+
+        self.pv_top = self.pv_y
+        self.pv_left = self.pv_x
+        self.pv_bottom = self.pv_y + self.pv_h
+        self.pv_right = self.pv_x + self.pv_w
+
+        self.pv_top_left = Point(self.pv_left, self.pv_top)
+        self.top_right = Point(self.pv_right, self.pv_top)
+        self.bottom_right = Point(self.pv_right, self.pv_bottom)
+        self.pv_top_left = Point(self.pv_left, self.pv_top)
+
+
 
     def inside(self, pt):
         return pt.x > self.x and pt.x < self.x + self.w and pt.y > self.y and pt.y < self.y + self.h
