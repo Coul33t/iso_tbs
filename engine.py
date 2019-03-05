@@ -53,8 +53,8 @@ class Engine:
         self.gamemap.create_default_terrain()
 
         for i in range(3, 6):
-            self.actors.append(Actor('soldier', 's', 0, sprite=0xE100, color=TEAM_COLORS[0], x=i, y=1, movement=1,
-                                     stats=Stats(3,3,1)))
+            self.actors.append(Actor('soldier', 's', 0, sprite=0xE100, color=TEAM_COLORS[0], 
+                                     x=i, y=1, movement=1, stats=Stats(3,3,1)))
         for i in range(0, 10, 2):
             self.actors.append(Actor('barbarian', 'b', 1, sprite=0xE101, color=TEAM_COLORS[1], x=i, y=8, movement=2,
                                      stats=Stats(3,2,0)))
@@ -155,16 +155,7 @@ class Engine:
             self.game_state = 'end_turn'
 
     def check_under_mouse(self):
-        self.under_mouse = None
-
-        mx = blt.state(blt.TK_MOUSE_X)
-        my = blt.state(blt.TK_MOUSE_Y)
-        off_mouse = Point(floor((mx / TERRAIN_SCALE_X) - self.map_offset.x),
-                                     floor((my / TERRAIN_SCALE_Y) - self.map_offset.y))
-
-        for a in self.actors:
-            if a != self.unit_turn and a.x == off_mouse.x and a.y == off_mouse.y:
-                self.under_mouse = a
+        pass
 
     def blit_debug(self, surface, color, screen, alpha=128):
         to_blit = pygame.Surface((surface.pv_w, surface.pv_h))
@@ -174,15 +165,15 @@ class Engine:
 
     def render(self):
         # Clean display
-        self.window.fill((0,0,0))
+        self.window.fill((0, 0, 0))
 
         if DEBUG:
-            red = pygame.Color(255,0,0)
-            green = pygame.Color(0,255,0)
-            blue = pygame.Color(0,0,255)
-            yellow = pygame.Color(255,255,0)
-            black = pygame.Color(0,0,0)
-            white = pygame.Color(255,255,255)
+            red = pygame.Color(255, 0, 0)
+            green = pygame.Color(0, 255 ,0)
+            blue = pygame.Color(0, 0, 255)
+            yellow = pygame.Color(255, 255, 0)
+            black = pygame.Color(0, 0, 0)
+            white = pygame.Color(255, 255, 255)
 
             self.blit_debug(WINDOW_SIZE, white, self.window, alpha=255)
             self.blit_debug(MAP_PANEL, blue, self.window, alpha=128)

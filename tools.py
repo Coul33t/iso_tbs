@@ -58,14 +58,14 @@ class Spritesheet():
         self.sheet = None
         self.set_spritesheet(path)
         self.size = self.sheet.get_rect().size
-        self.rows = int(self.size[1] / TILE_SIZE_X)
-        self.cols = int(self.size[0] / TILE_SIZE_Y)
+        self.rows = int(self.size[1] / TILE_SIZE_Y)
+        self.cols = int(self.size[0] / TILE_SIZE_X)
         self.sprites = []
 
     def set_spritesheet(self, path):
         try:
             self.sheet = pygame.image.load(path)
-        except:
+        except pygame.error:
             print('ERROR: error while loading the spritesheet.')
 
     def load_sprite(self, row, col, sprite_size=(TILE_SIZE_X, TILE_SIZE_Y)):
@@ -81,11 +81,10 @@ class Spritesheet():
         col = col * TILE_SIZE_X
 
         sprite = pygame.Surface((sprite_size[0], sprite_size[1])).convert()
-        sprite.blit(self.sheet, (row, col))
+        sprite.blit(self.sheet, (0, 0), area=(col, row, sprite_size[0], sprite_size[1]))
         return sprite
 
     def load_all_sprites(self):
-        sprite_size=(TILE_SIZE_X, TILE_SIZE_Y)
 
         for i in range(self.rows):
             new_row = []
