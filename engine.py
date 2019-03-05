@@ -3,8 +3,9 @@ from pygame.locals import *
 
 from math import ceil, floor
 
-from tools import dst_euc, dst_man, Point, point_in
+from tools import dst_euc, dst_man, Point, point_in, Spritesheet
 from constants import *
+from ui_shapes import *
 from actor import Actor, Stats
 from gamemap import GameMap
 
@@ -13,6 +14,7 @@ DEBUG = True
 class Engine:
     def __init__(self, gamemap=GameMap()):
         self.window = None
+        self.map_panel = None
 
         self.actors = []
         self.turn_to_take = []
@@ -32,6 +34,7 @@ class Engine:
         self.map_offset = Point(MAP_PANEL.x, MAP_PANEL.y)
 
         self.init_game()
+        self.spritesheet = Spritesheet('res/spritesheet.png')
 
         self.game_state = 'menu'
         self.game_state = 'playing'
@@ -39,7 +42,10 @@ class Engine:
     def init_display(self):
         pygame.init()
         self.window = pygame.display.set_mode((WINDOW_SIZE.pv_w, WINDOW_SIZE.pv_h))
+        self.map_panel = pygame.Surface((MAP_PANEL.pv_w, MAP_PANEL.pv_h))
         pygame.display.set_caption('Iso TBS')
+        self.spritesheet.load_all_sprites()
+
 
 
     def init_game(self):
@@ -67,9 +73,6 @@ class Engine:
         self.unit_turn = self.turn_to_take.pop(0)
         self.unit_turn.new_turn()
         self.game_state = 'new_turn'
-
-    def close_game(self):
-        blt.close()
 
     def get_possible_movement(self, actor):
         possible_movement = []
@@ -170,6 +173,9 @@ class Engine:
         screen.blit(to_blit, (surface.pv_x, surface.pv_y))
 
     def render(self):
+        # Clean display
+        self.window.fill((0,0,0))
+
         if DEBUG:
             red = pygame.Color(255,0,0)
             green = pygame.Color(0,255,0)
@@ -178,12 +184,19 @@ class Engine:
             black = pygame.Color(0,0,0)
             white = pygame.Color(255,255,255)
 
-            self.blit_debug(WINDOW_SIZE, white, self.window, alpha=64)
-            self.blit_debug(MAP_PANEL, blue, self.window, alpha=64)
-            self.blit_debug(MESSAGE_PANEL, red, self.window, alpha=64)
-            self.blit_debug(STATS_PANEL, green, self.window, alpha=64)
-            self.blit_debug(STATS_ENEMY_PANEL, yellow, self.window, alpha=64)
-            self.blit_debug(BUTTONS_PANEL, black, self.window, alpha=64)
+            self.blit_debug(WINDOW_SIZE, white, self.window, alpha=255)
+            self.blit_debug(MAP_PANEL, blue, self.window, alpha=128)
+            self.blit_debug(MESSAGE_PANEL, red, self.window, alpha=128)
+            self.blit_debug(STATS_PANEL, green, self.window, alpha=128)
+            self.blit_debug(STATS_ENEMY_PANEL, yellow, self.window, alpha=128)
+            self.blit_debug(BUTTONS_PANEL, black, self.window, alpha=128)
+
+        for y, row in enumerate(self.gamemap.terrain):
+            for x, tile in enumerate(row):
+                self.map_panel.blit(self.spritesheet.get_sprite(tile.sprite), (x * TILE_SIZE_X, y * TILE_SIZE_Y))
+
+        self.window.blit(self.map_panel, (MAP_PANEL.pv_x, MAP_PANEL.pv_y))
+        pygame.display.update()
 
 
     def update(self):
@@ -210,8 +223,6 @@ class Engine:
                 self.unit_turn = self.turn_to_take.pop(0)
 
             self.unit_turn.new_turn()
-
-        pygame.display.update()
 
     def exit(self):
         pygame.quit()

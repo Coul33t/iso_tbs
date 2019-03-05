@@ -5,9 +5,10 @@ from tools import Point
 # tmp
 COLORS = {'~': 'blue', 'T': 'green', '.': 'yellow'}
 class Tile:
-    def __init__(self, color, charac=' ', properties=[]):
+    def __init__(self, color='pink', charac=' ', sprite=None, properties=[]):
         self.color = color
         self.charac = charac
+        self.sprite = sprite
         self.properties = properties
 
 
@@ -18,15 +19,15 @@ class GameMap:
         self.h = 0
 
     def create_default_terrain(self):
-        for y in range(10):
+        for y in range(20):
             new_row = []
-            for x in range(10):
-                color = 'white'
+            for x in range(20):
+                sprite = 'grass'
 
                 if (y%2 == 0 and x%2 == 1) or (y%2 == 1 and x%2 == 0):
-                    color = 'grey'
+                    sprite = 'water'
 
-                new_row.append(Tile(color))
+                new_row.append(Tile(sprite=sprite))
             self.terrain.append(new_row)
 
         self.w = len(self.terrain[0])
