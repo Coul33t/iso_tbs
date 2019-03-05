@@ -8,7 +8,7 @@ from constants import *
 from actor import Actor, Stats
 from gamemap import GameMap
 
-DEBUG = True
+DEBUG = False
 
 class Engine:
     def __init__(self, gamemap=GameMap()):
@@ -38,7 +38,7 @@ class Engine:
 
     def init_display(self):
         pygame.init()
-        self.window = pygame.display.set_mode((WINDOW_X_SIZE, WINDOW_Y_SIZE))
+        self.window = pygame.display.set_mode((400, 300))
         pygame.display.set_caption('Iso TBS')
 
 
@@ -117,6 +117,14 @@ class Engine:
 
         return possible_movement
 
+    def key_check(self, key):
+        if key in QUIT_KEY:
+            self.game_state = 'exit'
+
+        if key in ACTION_KEY:
+            if key == 44:
+                self.game_state = 'end_turn'
+
 
     def mouse_check(self, coordinates):
         # Useful for map related stuff
@@ -164,7 +172,7 @@ class Engine:
                 self.under_mouse = a
 
     def render(self):
-        pass
+
 
     def update(self):
         # If everybody took its turn, then new turn: the list containing
@@ -173,9 +181,7 @@ class Engine:
             self.turn_to_take = [a for a in self.actors if not a.dead]
             self.turn_to_take.sort(key=lambda x: x.stats.mod['agility'], reverse=True)
 
-        for event in pygame.event.get():
-            if event.type == QUIT:
-                self.game_state = 'exit'
+
 
 
         self.unit_turn.check_end()
@@ -190,8 +196,3 @@ class Engine:
                 self.unit_turn = self.turn_to_take.pop(0)
 
             self.unit_turn.new_turn()
-
-        pygame.display.update()
-
-    def exit(self):
-        pygame.quit()
