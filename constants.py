@@ -35,7 +35,12 @@ BUTTONS_PANEL_W = STATS_ENEMY_PANEL_W
 
 SPRITES = {'grass': (0,0),
            'water': (0,1),
-           'forest': (0,2)}
+           'forest': (0,2),
+           'king': (1,0),
+           'leader': (1,1),
+           'soldier': (1,2),
+           'mercenary': (1,3),
+           'xander': (1,4)}
 
 
 QUIT_KEY = (41, 224)

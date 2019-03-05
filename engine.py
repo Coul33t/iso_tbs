@@ -15,6 +15,10 @@ class Engine:
     def __init__(self, gamemap=GameMap()):
         self.window = None
         self.map_panel = None
+        self.stats_panel = None
+        self.stats_enemy_panel = None
+        self.message_panel = None
+        self.buttons_panel = None
 
         self.actors = []
         self.turn_to_take = []
@@ -43,6 +47,10 @@ class Engine:
         pygame.init()
         self.window = pygame.display.set_mode((WINDOW_SIZE.pv_w, WINDOW_SIZE.pv_h))
         self.map_panel = pygame.Surface((MAP_PANEL.pv_w, MAP_PANEL.pv_h))
+        self.stats_panel = pygame.Surface((STATS_PANEL.pv_w, STATS_PANEL.pv_h))
+        self.stats_enemy_panel = pygame.Surface((STATS_ENEMY_PANEL.pv_w, STATS_ENEMY_PANEL.pv_h))
+        self.message_panel = pygame.Surface((MESSAGE_PANEL.pv_w, MESSAGE_PANEL.pv_h))
+        self.buttons_panel = pygame.Surface((BUTTONS_PANEL.pv_w, BUTTONS_PANEL.pv_h))
         pygame.display.set_caption('Iso TBS')
         self.spritesheet.load_all_sprites()
 
@@ -53,19 +61,19 @@ class Engine:
         self.gamemap.create_default_terrain()
 
         for i in range(3, 6):
-            self.actors.append(Actor('soldier', 's', 0, sprite=0xE100, color=TEAM_COLORS[0], 
+            self.actors.append(Actor('soldier', 's', 0, sprite='soldier', color=TEAM_COLORS[0], 
                                      x=i, y=1, movement=1, stats=Stats(3,3,1)))
         for i in range(0, 10, 2):
-            self.actors.append(Actor('barbarian', 'b', 1, sprite=0xE101, color=TEAM_COLORS[1], x=i, y=8, movement=2,
+            self.actors.append(Actor('barbarian', 'b', 1, sprite='mercenary', color=TEAM_COLORS[1], x=i, y=8, movement=2,
                                      stats=Stats(3,2,0)))
 
 
-        self.actors.append(Actor('king', 'K', 0, sprite=0xE102, color=TEAM_COLORS[0], x=4, y=0,
+        self.actors.append(Actor('king', 'K', 0, sprite='king', color=TEAM_COLORS[0], x=4, y=0,
                                  movement=2, stats=Stats(5,3,4)))
-        self.actors.append(Actor('leader', 'L', 1, sprite=0xE103, color=TEAM_COLORS[1], x=4, y=9,
+        self.actors.append(Actor('leader', 'L', 1, sprite='leader', color=TEAM_COLORS[1], x=4, y=9,
                                  movement=2, stats=Stats(7,4,2)))
 
-        self.actors.append(Actor('Xander', 'S', 2, sprite=0xE104, color=TEAM_COLORS[2], x=5, y=5,
+        self.actors.append(Actor('Xander', 'S', 2, sprite='xander', color=TEAM_COLORS[2], x=5, y=5,
                                  movement=10, stats=Stats(7,40,2)))
 
         self.turn_to_take = self.actors.copy()
@@ -157,15 +165,14 @@ class Engine:
     def check_under_mouse(self):
         pass
 
-    def blit_debug(self, surface, color, screen, alpha=128):
-        to_blit = pygame.Surface((surface.pv_w, surface.pv_h))
-        to_blit.set_alpha(alpha)
-        to_blit.fill(color)
-        screen.blit(to_blit, (surface.pv_x, surface.pv_y))
-
     def render(self):
         # Clean display
         self.window.fill((0, 0, 0))
+        self.map_panel.fill((0, 0, 0))
+        self.stats_panel.fill((0, 0, 0))
+        self.stats_enemy_panel.fill((0, 0, 0))
+        self.message_panel.fill((0, 0, 0))
+        self.buttons_panel.fill((0, 0, 0))
 
         if DEBUG:
             red = pygame.Color(255, 0, 0)
@@ -175,18 +182,32 @@ class Engine:
             black = pygame.Color(0, 0, 0)
             white = pygame.Color(255, 255, 255)
 
-            self.blit_debug(WINDOW_SIZE, white, self.window, alpha=255)
-            self.blit_debug(MAP_PANEL, blue, self.window, alpha=128)
-            self.blit_debug(MESSAGE_PANEL, red, self.window, alpha=128)
-            self.blit_debug(STATS_PANEL, green, self.window, alpha=128)
-            self.blit_debug(STATS_ENEMY_PANEL, yellow, self.window, alpha=128)
-            self.blit_debug(BUTTONS_PANEL, black, self.window, alpha=128)
+            self.window.fill(white)
+            self.map_panel.fill(blue)
+            self.stats_panel.fill(green)
+            self.stats_enemy_panel.fill(yellow)
+            self.message_panel.fill(red)
+            self.buttons_panel.fill(black)
 
         for y, row in enumerate(self.gamemap.terrain):
             for x, tile in enumerate(row):
                 self.map_panel.blit(self.spritesheet.get_sprite(tile.sprite), (x * TILE_SIZE_X, y * TILE_SIZE_Y))
 
+        for actor in [a for a in self.actors if not a.dead]:
+            self.map_panel.blit(self.spritesheet.get_sprite(actor.sprite), (actor.x * TILE_SIZE_X, actor.y * TILE_SIZE_Y))
+
+        mx, my = pygame.mouse.get_pos()
+        mouse_pt = Point(mx, my)
+        if mouse_pt.inside(self.map_panel):
+            rel_x = mouse_pt.x - self.map_panel.pv_x
+            rel_y = mouse_pt.y - self.map_panel.pv_y
+
+
         self.window.blit(self.map_panel, (MAP_PANEL.pv_x, MAP_PANEL.pv_y))
+        self.window.blit(self.stats_panel, (STATS_PANEL.pv_x, STATS_PANEL.pv_y))
+        self.window.blit(self.stats_enemy_panel, (STATS_ENEMY_PANEL.pv_x, STATS_ENEMY_PANEL.pv_y))
+        self.window.blit(self.message_panel, (MESSAGE_PANEL.pv_x, MESSAGE_PANEL.pv_y))
+        self.window.blit(self.buttons_panel, (BUTTONS_PANEL.pv_x, BUTTONS_PANEL.pv_y))
         pygame.display.update()
 
 

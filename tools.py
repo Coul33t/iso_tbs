@@ -11,6 +11,9 @@ class Point:
     def __eq__(self, other):
         return self.x == other.x and self.y == other.y
 
+    def inside(self, rect):
+        return self.x > rect.pv_x and self.x < rect.pv_x + rect.pv_w and self.y > rect.pv_y and self.y < rect.pv_y + rect.pv_h
+
 # Do I really need to put some docstring for this?
 class Rect:
     def __init__(self, x, y, w, h, size_x, size_y):
@@ -47,10 +50,6 @@ class Rect:
         self.top_right = Point(self.pv_right, self.pv_top)
         self.bottom_right = Point(self.pv_right, self.pv_bottom)
         self.pv_top_left = Point(self.pv_left, self.pv_top)
-
-
-    def inside(self, pt):
-        return pt.x > self.x and pt.x < self.x + self.w and pt.y > self.y and pt.y < self.y + self.h
 
 
 class Spritesheet():
