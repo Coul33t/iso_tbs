@@ -14,6 +14,13 @@ class Point:
     def inside(self, rect):
         return self.x > rect.pv_x and self.x < rect.pv_x + rect.pv_w and self.y > rect.pv_y and self.y < rect.pv_y + rect.pv_h
 
+    def point_in(self, lst):
+        for other_ptn in lst:
+            if self.x == other_ptn.x and self.y == other_ptn.y:
+                return True
+
+        return False
+
 # Do I really need to put some docstring for this?
 class Rect:
     def __init__(self, x, y, w, h, size_x, size_y):
@@ -115,11 +122,3 @@ def dst_euc(p1, p2=Point(0,0)):
 # Manhattan distance
 def dst_man(p1, p2=Point(0,0)):
     return abs(p1.x - p2.x) + abs(p1.y - p2.y)
-
-def point_in(ptn, lst):
-    for other_ptn in lst:
-        if ptn.x == other_ptn.x and ptn.y == other_ptn.y:
-            return True
-
-    return False
-
