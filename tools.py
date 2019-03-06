@@ -11,6 +11,9 @@ class Point:
     def __eq__(self, other):
         return self.x == other.x and self.y == other.y
 
+    def __hash__(self):
+        return hash((self.x, self.y))
+
     def inside(self, rect):
         return self.x > rect.pv_x and self.x < rect.pv_x + rect.pv_w and self.y > rect.pv_y and self.y < rect.pv_y + rect.pv_h
 
@@ -122,3 +125,23 @@ def dst_euc(p1, p2=Point(0,0)):
 # Manhattan distance
 def dst_man(p1, p2=Point(0,0)):
     return abs(p1.x - p2.x) + abs(p1.y - p2.y)
+
+
+def get_neighboor(origin, node_list):
+    nei = []
+    for node in node_list:
+        if 0 < dst_man(node['pt'], origin) < 2:
+            nei.append(node)
+
+    return nei
+
+
+def recursive_check(origin, node_list, visisted_nodes, final_list):
+    visisted_nodes.append(origin)
+
+    for nei in get_neighboor(origin['pt'], node_list):
+        if nei['prop']['walkable'] and nei not in visisted_nodes:
+
+            recursive_check(nei, node_list, visisted_nodes, final_list)
+
+    final_list.append(origin)
