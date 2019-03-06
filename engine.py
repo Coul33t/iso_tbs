@@ -20,6 +20,8 @@ class Engine:
         self.message_panel = None
         self.buttons_panel = None
 
+        self.spritesheet = None
+
         self.actors = []
         self.turn_to_take = []
 
@@ -38,20 +40,24 @@ class Engine:
         self.map_offset = Point(MAP_PANEL.x, MAP_PANEL.y)
 
         self.init_game()
-        self.spritesheet = Spritesheet('res/spritesheet.png')
+
 
         self.game_state = 'menu'
         self.game_state = 'playing'
 
     def init_display(self):
         pygame.init()
+
         self.window = pygame.display.set_mode((WINDOW_SIZE.pv_w, WINDOW_SIZE.pv_h))
         self.map_panel = pygame.Surface((MAP_PANEL.pv_w, MAP_PANEL.pv_h))
         self.stats_panel = pygame.Surface((STATS_PANEL.pv_w, STATS_PANEL.pv_h))
         self.stats_enemy_panel = pygame.Surface((STATS_ENEMY_PANEL.pv_w, STATS_ENEMY_PANEL.pv_h))
         self.message_panel = pygame.Surface((MESSAGE_PANEL.pv_w, MESSAGE_PANEL.pv_h))
         self.buttons_panel = pygame.Surface((BUTTONS_PANEL.pv_w, BUTTONS_PANEL.pv_h))
+
         pygame.display.set_caption('Iso TBS')
+
+        self.spritesheet = Spritesheet('res/spritesheet.png')
         self.spritesheet.load_all_sprites()
 
 
@@ -61,7 +67,7 @@ class Engine:
         self.gamemap.create_default_terrain()
 
         for i in range(3, 6):
-            self.actors.append(Actor('soldier', 's', 0, sprite='soldier', color=TEAM_COLORS[0], 
+            self.actors.append(Actor('soldier', 's', 0, sprite='soldier', color=TEAM_COLORS[0],
                                      x=i, y=1, movement=1, stats=Stats(3,3,1)))
         for i in range(0, 10, 2):
             self.actors.append(Actor('barbarian', 'b', 1, sprite='mercenary', color=TEAM_COLORS[1], x=i, y=8, movement=2,
@@ -198,9 +204,12 @@ class Engine:
 
         mx, my = pygame.mouse.get_pos()
         mouse_pt = Point(mx, my)
-        if mouse_pt.inside(self.map_panel):
-            rel_x = mouse_pt.x - self.map_panel.pv_x
-            rel_y = mouse_pt.y - self.map_panel.pv_y
+        if mouse_pt.inside(MAP_PANEL):
+            rel_x = mouse_pt.x - MAP_PANEL.pv_x
+            rel_y = mouse_pt.y - MAP_PANEL.pv_y
+            new_x = floor(rel_x / TILE_SIZE_X) * TILE_SIZE_X
+            new_y = floor(rel_y / TILE_SIZE_Y) * TILE_SIZE_Y
+            self.map_panel.blit(self.spritesheet.get_sprite(SPRITES['cursor']), (new_x, new_y))
 
 
         self.window.blit(self.map_panel, (MAP_PANEL.pv_x, MAP_PANEL.pv_y))
