@@ -26,9 +26,9 @@ class GameMap:
             new_row = []
             for x in range(20):
                 sprite = 'grass'
-                prop = None
+                prop = {'walkable': True}
 
-                if y == 0 or x == 0 or x == 19 or y == 19:
+                if y == 0 or x == 0 or x == 19 or y == 19 or y == 5:
                     sprite = 'water'
                     prop = {'walkable': False}
 
