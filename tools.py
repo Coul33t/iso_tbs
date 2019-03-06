@@ -63,9 +63,9 @@ class Spritesheet():
 
     def set_spritesheet(self, path):
         try:
-            self.sheet = pygame.image.load(path)
-        except pygame.error:
-            print('ERROR: error while loading the spritesheet.')
+            self.sheet = pygame.image.load(path).convert_alpha()
+        except pygame.error as e:
+            print(f'ERROR: error while loading the spritesheet ({e})')
 
     def load_sprite(self, row, col, sprite_size=(TILE_SIZE_X, TILE_SIZE_Y)):
         if row > self.rows:
@@ -79,7 +79,7 @@ class Spritesheet():
         row = row * TILE_SIZE_Y
         col = col * TILE_SIZE_X
 
-        sprite = pygame.Surface((sprite_size[0], sprite_size[1])).convert()
+        sprite = pygame.Surface((sprite_size[0], sprite_size[1]), pygame.SRCALPHA).convert_alpha()
         sprite.blit(self.sheet, (0, 0), area=(col, row, sprite_size[0], sprite_size[1]))
         return sprite
 
