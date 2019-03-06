@@ -41,11 +41,13 @@ SPRITES = {'grass': (0,0),
            'soldier': (1,2),
            'mercenary': (1,3),
            'xander': (1,4),
-           'cursor':(2,0)}
+           'cursor':(2,0),
+           'legal_move': (2,1),
+           'attack_move': (2,2)}
 
 
-QUIT_KEY = (41, 224)
-ACTION_KEY = (44,)
+QUIT_KEY = (27, 224)
+ACTION_KEY = (32,)
 MOVEMENT_KEYS = {93: [0, 0], 90: [0, 1], 89: [-1, 1], 92: [-1, 0], 95: [-1, -1], 96: [0, -1], 97: [1, -1],
                  94: [1, 0], 91: [1, 1]}
 
