@@ -8,6 +8,7 @@ from constants import *
 from ui_shapes import *
 from actor import Actor, Stats
 from gamemap import GameMap
+from tools import recursive_check
 
 DEBUG = False
 
@@ -79,7 +80,7 @@ class Engine:
         self.actors.append(Actor('leader', 'L', 1, sprite='leader', color=TEAM_COLORS[1], x=4, y=9,
                                  movement=2, stats=Stats(7,4,2)))
 
-        self.actors.append(Actor('Xander', 'S', 2, sprite='xander', color=TEAM_COLORS[2], x=5, y=5,
+        self.actors.append(Actor('Xander', 'S', 2, sprite='xander', color=TEAM_COLORS[2], x=5, y=7,
                                  movement=10, stats=Stats(7,40,2)))
 
         self.turn_to_take = self.actors.copy()
@@ -107,25 +108,30 @@ class Engine:
                 if ((tc.x, tc.y) in actors_position.keys()):
                     if actors_position[(tc.x, tc.y)].blocks:
                         if actors_position[(tc.x, tc.y)].team != actor.team:
-                            possible_movement.append({'mov': tc, 'valid':'enemy'})
+                            possible_movement.append({'pt': tc, 'valid':'enemy'})
 
             return possible_movement
 
 
-        # compute the possible movement
-        possible_movement = [Point(x+actor.x, y+actor.y) for x in range(-actor.movement_left, actor.movement_left+1)
-                                                         for y in range(-actor.movement_left, actor.movement_left+1)
-                                                         if ((x != 0 or y != 0) and dst_man(Point(x,y)) <= actor.movement_left)]
+        # compute the possible movement (eliminate the out of bounds movement at the same time)
+        possible_movement = [{'pt': Point(x+actor.x, y+actor.y), 'prop': self.gamemap.terrain[y+actor.y][x+actor.x].properties}
+                             for x in range(-actor.movement_left, actor.movement_left+1)
+                             for y in range(-actor.movement_left, actor.movement_left+1)
+                             if (x+actor.x > -1 and x+actor.x < self.gamemap.w
+                             and y+actor.y > -1 and  y+actor.y < self.gamemap.h)
+                             and dst_man(Point(x, y)) <= actor.movement_left]
 
-        # Eliminate out of bounds movements
-        possible_movement = [{'mov':pm, 'valid':'true'} for pm in possible_movement
-                             if (pm.x > -1 and pm.x < self.gamemap.w
-                             and pm.y > -1 and pm.y < self.gamemap.h)]
 
-        for pm in possible_movement:
+        final_list = []
+        origin = possible_movement[next((index for (index, d) in enumerate(possible_movement) if d["pt"] == Point(actor.x,actor.y)), None)]
+        recursive_check(origin, possible_movement, [], final_list)
 
-            x = pm['mov'].x
-            y = pm['mov'].y
+        for pm in final_list:
+
+            x = pm['pt'].x
+            y = pm['pt'].y
+
+            pm['valid'] = 'true'
 
             if ((x, y) in actors_position.keys()):
                 if actors_position[(x, y)].blocks:
@@ -134,7 +140,7 @@ class Engine:
                     else:
                         pm['valid'] = 'false'
 
-        return possible_movement
+        return final_list
 
     def key_check(self, key_info):
         if key_info['key'] in QUIT_KEY:
@@ -172,7 +178,7 @@ class Engine:
             new_coord = Point(new_x, new_y)
 
             # Moving on an empty case if there are some movement left
-            if self.unit_turn.movement_left > 0 and new_coord.point_in([x['mov'] for x in self.highlighted_cases if x['valid'] == 'true']):
+            if self.unit_turn.movement_left > 0 and new_coord.point_in([x['pt'] for x in self.highlighted_cases if x['valid'] == 'true']):
 
                 self.unit_turn.movement_left -= dst_man(Point(self.unit_turn.x, self.unit_turn.y),
                                                         Point(new_coord.x,  new_coord.y))
@@ -185,7 +191,7 @@ class Engine:
                 self.message_queue.append(message)
 
             # Attacking an enemy
-            elif new_coord.point_in([x['mov'] for x in self.highlighted_cases if x['valid'] == 'enemy']):
+            elif new_coord.point_in([x['pt'] for x in self.highlighted_cases if x['valid'] == 'enemy']):
                 other_actor = [a for a in self.actors if Point(a.x, a.y) == new_coord][0]
 
                 # If we're close enough
@@ -245,25 +251,26 @@ class Engine:
         for y, row in enumerate(self.gamemap.terrain):
             for x, tile in enumerate(row):
                 self.map_panel.blit(self.spritesheet.get_sprite(tile.sprite), (x * TILE_SIZE_X, y * TILE_SIZE_Y))
-        # Legal moves
 
+        # Legal moves
         self.highlighted_cases = self.get_possible_movement(self.unit_turn)
         for highlight in self.highlighted_cases:
 
             if highlight['valid'] == 'true':
-                self.map_panel.blit(self.spritesheet.get_sprite('legal_move'), (highlight['mov'].x * TILE_SIZE_X, highlight['mov'].y * TILE_SIZE_Y))
+                self.map_panel.blit(self.spritesheet.get_sprite('legal_move'), (highlight['pt'].x * TILE_SIZE_X, highlight['pt'].y * TILE_SIZE_Y))
             elif highlight['valid'] == 'enemy':
-                self.map_panel.blit(self.spritesheet.get_sprite('attack_move'), (highlight['mov'].x * TILE_SIZE_X, highlight['mov'].y * TILE_SIZE_Y))
+                self.map_panel.blit(self.spritesheet.get_sprite('attack_move'), (highlight['pt'].x * TILE_SIZE_X, highlight['pt'].y * TILE_SIZE_Y))
 
         # Actors
         for actor in [a for a in self.actors if not a.dead]:
             self.map_panel.blit(self.spritesheet.get_sprite(actor.sprite), (actor.x * TILE_SIZE_X, actor.y * TILE_SIZE_Y))
 
+        self.map_panel.blit(self.spritesheet.get_sprite('current_unit'), (self.unit_turn.x * TILE_SIZE_X, self.unit_turn.y * TILE_SIZE_Y))
         mx, my = pygame.mouse.get_pos()
         mouse_pt = Point(mx, my)
         if mouse_pt.inside(MAP_PANEL):
             new_x, new_y = self.mouse_coord_to_panel(mouse_pt, MAP_PANEL)
-            self.map_panel.blit(self.spritesheet.get_sprite(SPRITES['cursor']), (new_x, new_y))
+            self.map_panel.blit(self.spritesheet.get_sprite('cursor'), (new_x, new_y))
 
 
         self.window.blit(self.map_panel, (MAP_PANEL.pv_x, MAP_PANEL.pv_y))
