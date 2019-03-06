@@ -3,13 +3,13 @@ from pygame.locals import *
 
 from math import ceil, floor
 
-from tools import dst_euc, dst_man, Point, point_in, Spritesheet
+from tools import dst_euc, dst_man, Point, Spritesheet
 from constants import *
 from ui_shapes import *
 from actor import Actor, Stats
 from gamemap import GameMap
 
-DEBUG = True
+DEBUG = False
 
 class Engine:
     def __init__(self, gamemap=GameMap()):
@@ -88,6 +88,8 @@ class Engine:
         self.unit_turn.new_turn()
         self.game_state = 'new_turn'
 
+        self.highlighted_cases = self.get_possible_movement(self.unit_turn)
+
     def get_possible_movement(self, actor):
         possible_movement = []
         # This is done so tiles can be highlighted in amber for allies
@@ -97,7 +99,8 @@ class Engine:
         if actor.movement_left == 0 and not actor.has_attacked:
 
             to_check =[Point(x+actor.x, y+actor.y) for x in range(-1,2) for y in range(-1,2)
-                                                   if ((x != 0 or y != 0) and dst_euc(Point(x,y)) <= 1)]
+                                                   if ((x != 0 or y != 0) and dst_man(Point(x,y)) <= 1)]
+
 
             for tc in to_check:
 
@@ -109,11 +112,10 @@ class Engine:
             return possible_movement
 
 
-
         # compute the possible movement
         possible_movement = [Point(x+actor.x, y+actor.y) for x in range(-actor.movement_left, actor.movement_left+1)
                                                          for y in range(-actor.movement_left, actor.movement_left+1)
-                                                         if ((x != 0 or y != 0) and dst_euc(Point(x,y)) <= actor.movement_left)]
+                                                         if ((x != 0 or y != 0) and dst_man(Point(x,y)) <= actor.movement_left)]
 
         # Eliminate out of bounds movements
         possible_movement = [{'mov':pm, 'valid':'true'} for pm in possible_movement
@@ -134,42 +136,86 @@ class Engine:
 
         return possible_movement
 
+    def key_check(self, key_info):
+        if key_info['key'] in QUIT_KEY:
+            self.game_state = 'exit'
 
-    def mouse_check(self, coordinates):
-        # Useful for map related stuff
-        offseted_coordinates = Point(floor((coordinates[0] / TERRAIN_SCALE_X) - self.map_offset.x),
-                                     floor((coordinates[1] / TERRAIN_SCALE_Y) - self.map_offset.y))
+        if key_info['key'] in ACTION_KEY:
+            if key_info['key'] == 32:
+                self.game_state = 'end_turn'
 
-        # Moving on an empty case if there are some movement left
-        if self.unit_turn.movement_left > 0 and point_in(offseted_coordinates, [x['mov'] for x in self.highlighted_cases if x['valid'] == 'true']):
+    def mouse_in_panel(self):
+        mx, my = pygame.mouse.get_pos()
+        mouse_pt = Point(mx, my)
 
-            self.unit_turn.movement_left -= dst_man(Point(self.unit_turn.x, self.unit_turn.y),
-                                                    Point(offseted_coordinates.x,  offseted_coordinates.y))
+        if mouse_pt.inside(MAP_PANEL):
+            return 'map'
 
-            message = f'Moved from {chr(self.unit_turn.x + 65)}{self.unit_turn.y} to {chr(offseted_coordinates.x + 65)}{offseted_coordinates.y}'
+        elif mouse_pt.inside(STATS_PANEL):
+            return 'stats'
 
-            self.unit_turn.x = offseted_coordinates.x
-            self.unit_turn.y = offseted_coordinates.y
+        elif mouse_pt.inside(STATS_ENEMY_PANEL):
+            return 'stats_enemy'
 
-            self.message_queue.append(message)
+        elif mouse_pt.inside(MESSAGE_PANEL):
+            return 'message'
 
-        # Attacking an enemy
-        elif point_in(offseted_coordinates, [x['mov'] for x in self.highlighted_cases if x['valid'] == 'enemy']):
-            other_actor = [a for a in self.actors if Point(a.x, a.y) == offseted_coordinates][0]
+        elif mouse_pt.inside(BUTTONS_PANEL):
+            return 'button'
 
-            # If we're close enough
-            if dst_man(Point(self.unit_turn.x, self.unit_turn.y), Point(other_actor.x, other_actor.y)) == 1:
-                self.message_queue.append(self.unit_turn.attack(other_actor))
+        return None
 
-                # The unit lose half (floored) of its remaining movement
-                self.unit_turn.movement_left = floor(self.unit_turn.movement_left / 2)
+    def mouse_click_check(self, coordinates):
+        if self.mouse_in_panel() == 'map':
 
-        # Ending turn
-        elif coordinates in [(x, TERMINAL_SIZE_Y - 6) for x in range(TERMINAL_SIZE_X - 8, TERMINAL_SIZE_X)]:
-            self.game_state = 'end_turn'
+            new_x, new_y = self.mouse_coord_to_panel(coordinates, MAP_PANEL, to_tile=True)
+            new_coord = Point(new_x, new_y)
+
+            # Moving on an empty case if there are some movement left
+            if self.unit_turn.movement_left > 0 and new_coord.point_in([x['mov'] for x in self.highlighted_cases if x['valid'] == 'true']):
+
+                self.unit_turn.movement_left -= dst_man(Point(self.unit_turn.x, self.unit_turn.y),
+                                                        Point(new_coord.x,  new_coord.y))
+
+                message = f'Moved from {chr(self.unit_turn.x + 65)}{self.unit_turn.y} to {chr(new_coord.x + 65)}{new_coord.y}'
+
+                self.unit_turn.x = new_coord.x
+                self.unit_turn.y = new_coord.y
+
+                self.message_queue.append(message)
+
+            # Attacking an enemy
+            elif new_coord.point_in([x['mov'] for x in self.highlighted_cases if x['valid'] == 'enemy']):
+                other_actor = [a for a in self.actors if Point(a.x, a.y) == new_coord][0]
+
+                # If we're close enough
+                if dst_man(Point(self.unit_turn.x, self.unit_turn.y), Point(other_actor.x, other_actor.y)) == 1:
+                    self.message_queue.append(self.unit_turn.attack(other_actor))
+
+                    # The unit lose half (floored) of its remaining movement
+                    self.unit_turn.movement_left = floor(self.unit_turn.movement_left / 2)
 
     def check_under_mouse(self):
-        pass
+        current_panel = self.mouse_in_panel()
+
+        if self.mouse_in_panel() == 'map':
+            pass
+
+    def mouse_coord_to_panel(self, coords, panel, to_tile=False):
+        if not isinstance(coords, Point):
+            coords = Point(coords[0], coords[1])
+
+        rel_x = coords.x - panel.pv_x
+        rel_y = coords.y - panel.pv_y
+
+        new_x = floor(rel_x / TILE_SIZE_X)
+        new_y = floor(rel_y / TILE_SIZE_Y)
+
+        if not to_tile:
+            new_x *= TILE_SIZE_X
+            new_y *= TILE_SIZE_Y
+
+        return new_x, new_y
 
     def render(self):
         # Clean display
@@ -195,27 +241,35 @@ class Engine:
             self.message_panel.fill(red)
             self.buttons_panel.fill(black)
 
+        # Terrain
         for y, row in enumerate(self.gamemap.terrain):
             for x, tile in enumerate(row):
                 self.map_panel.blit(self.spritesheet.get_sprite(tile.sprite), (x * TILE_SIZE_X, y * TILE_SIZE_Y))
+        # Legal moves
 
+        self.highlighted_cases = self.get_possible_movement(self.unit_turn)
+        for highlight in self.highlighted_cases:
+
+            if highlight['valid'] == 'true':
+                self.map_panel.blit(self.spritesheet.get_sprite('legal_move'), (highlight['mov'].x * TILE_SIZE_X, highlight['mov'].y * TILE_SIZE_Y))
+            elif highlight['valid'] == 'enemy':
+                self.map_panel.blit(self.spritesheet.get_sprite('attack_move'), (highlight['mov'].x * TILE_SIZE_X, highlight['mov'].y * TILE_SIZE_Y))
+
+        # Actors
         for actor in [a for a in self.actors if not a.dead]:
             self.map_panel.blit(self.spritesheet.get_sprite(actor.sprite), (actor.x * TILE_SIZE_X, actor.y * TILE_SIZE_Y))
 
         mx, my = pygame.mouse.get_pos()
         mouse_pt = Point(mx, my)
         if mouse_pt.inside(MAP_PANEL):
-            rel_x = mouse_pt.x - MAP_PANEL.pv_x
-            rel_y = mouse_pt.y - MAP_PANEL.pv_y
-            new_x = floor(rel_x / TILE_SIZE_X) * TILE_SIZE_X
-            new_y = floor(rel_y / TILE_SIZE_Y) * TILE_SIZE_Y
+            new_x, new_y = self.mouse_coord_to_panel(mouse_pt, MAP_PANEL)
             self.map_panel.blit(self.spritesheet.get_sprite(SPRITES['cursor']), (new_x, new_y))
 
 
         self.window.blit(self.map_panel, (MAP_PANEL.pv_x, MAP_PANEL.pv_y))
         self.window.blit(self.stats_panel, (STATS_PANEL.pv_x, STATS_PANEL.pv_y))
         self.window.blit(self.stats_enemy_panel, (STATS_ENEMY_PANEL.pv_x, STATS_ENEMY_PANEL.pv_y))
-        self.window.blit(self.message_panel, (MESSAGE_PANEL.pv_x, MESSAGE_PANEL.pv_y))
+        #self.window.blit(self.message_panel, (MESSAGE_PANEL.pv_x, MESSAGE_PANEL.pv_y))
         self.window.blit(self.buttons_panel, (BUTTONS_PANEL.pv_x, BUTTONS_PANEL.pv_y))
         pygame.display.update()
 
@@ -231,6 +285,23 @@ class Engine:
             if event.type == QUIT:
                 self.game_state = 'exit'
 
+            if event.type == pygame.MOUSEBUTTONUP:
+                self.event_queue.append(['mouse_left_click'])
+
+            if event.type == KEYDOWN:
+                self.event_queue.append(['key_pressed', event.dict])
+
+
+        for event in self.event_queue:
+            if event[0] == 'mouse_left_click':
+                mx, my = pygame.mouse.get_pos()
+                mouse_pt = Point(mx, my)
+                self.mouse_click_check(mouse_pt)
+
+            elif event[0] == 'key_pressed':
+                self.key_check(event[1])
+
+            self.event_queue.remove(event)
 
         self.unit_turn.check_end()
 
