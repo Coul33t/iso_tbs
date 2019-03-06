@@ -43,7 +43,8 @@ SPRITES = {'grass': (0,0),
            'xander': (1,4),
            'cursor':(2,0),
            'legal_move': (2,1),
-           'attack_move': (2,2)}
+           'attack_move': (2,2),
+           'current_unit': (2,3)}
 
 
 QUIT_KEY = (27, 224)
