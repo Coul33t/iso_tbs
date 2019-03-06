@@ -5,11 +5,14 @@ from tools import Point
 # tmp
 COLORS = {'~': 'blue', 'T': 'green', '.': 'yellow'}
 class Tile:
-    def __init__(self, color='pink', charac=' ', sprite=None, properties=[]):
+    def __init__(self, color='pink', charac=' ', sprite=None, properties={}):
         self.color = color
         self.charac = charac
         self.sprite = sprite
         self.properties = properties
+
+    def add_property(self, prop, val):
+        self.properties[prop] = val
 
 
 class GameMap:
@@ -23,11 +26,13 @@ class GameMap:
             new_row = []
             for x in range(20):
                 sprite = 'grass'
+                prop = None
 
-                if (y%2 == 0 and x%2 == 1) or (y%2 == 1 and x%2 == 0):
+                if y == 0 or x == 0 or x == 19 or y == 19:
                     sprite = 'water'
+                    prop = {'walkable': False}
 
-                new_row.append(Tile(sprite=sprite))
+                new_row.append(Tile(sprite=sprite, properties=prop))
             self.terrain.append(new_row)
 
         self.w = len(self.terrain[0])
