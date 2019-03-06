@@ -40,7 +40,8 @@ SPRITES = {'grass': (0,0),
            'leader': (1,1),
            'soldier': (1,2),
            'mercenary': (1,3),
-           'xander': (1,4)}
+           'xander': (1,4),
+           'cursor':(2,0)}
 
 
 QUIT_KEY = (41, 224)
