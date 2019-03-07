@@ -4,9 +4,13 @@ from constants import *
 
 # Do I really need to put some docstring for this?
 class Point:
-    def __init__(self, x, y):
-        self.x = x
-        self.y = y
+    def __init__(self, *args):
+        if len(args) == 2:
+            self.x = args[0]
+            self.y = args[1]
+        elif isinstance(args[0], tuple):
+            self.x = args[0][0]
+            self.y = args[0][1]
 
     def __eq__(self, other):
         return self.x == other.x and self.y == other.y
@@ -132,16 +136,15 @@ def get_neighboor(origin, node_list):
     for node in node_list:
         if 0 < dst_man(node['pt'], origin) < 2:
             nei.append(node)
-
     return nei
 
-
-def recursive_check(origin, node_list, visisted_nodes, final_list):
-    visisted_nodes.append(origin)
-
-    for nei in get_neighboor(origin['pt'], node_list):
-        if nei['prop']['walkable'] and nei not in visisted_nodes:
-
-            recursive_check(nei, node_list, visisted_nodes, final_list)
+RECURSIVE_DEBUG = False
+def recursive_check(origin, node_list, movement_left, visisted_nodes, final_list):
+    visisted_nodes.append({origin['pt']: movement_left})
+    if movement_left > 0:
+        for nei in get_neighboor(origin['pt'], node_list):
+            if nei['prop']['walkable'] and (nei not in [x.keys() for x in visisted_nodes]
+                                            or (visisted_nodes[nei] < movement_left)):
+                recursive_check(nei, node_list, movement_left - 1, visisted_nodes, final_list)
 
     final_list.append(origin)
