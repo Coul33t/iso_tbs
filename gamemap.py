@@ -28,7 +28,7 @@ class GameMap:
                 sprite = 'grass'
                 prop = {'walkable': True}
 
-                if y == 0 or x == 0 or x == 19 or y == 19 or y == 5:
+                if y == 0 or x == 0 or x == 19 or y == 19 or (y == 5 and x != 5):
                     sprite = 'water'
                     prop = {'walkable': False}
 
