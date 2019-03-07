@@ -69,19 +69,19 @@ class Engine:
 
         for i in range(3, 6):
             self.actors.append(Actor('soldier', 's', 0, sprite='soldier', color=TEAM_COLORS[0],
-                                     x=i, y=1, movement=1, stats=Stats(3,3,1)))
-        for i in range(0, 10, 2):
-            self.actors.append(Actor('barbarian', 'b', 1, sprite='mercenary', color=TEAM_COLORS[1], x=i, y=8, movement=2,
+                                     x=i, y=2, movement=1, stats=Stats(3,3,1)))
+        for i in range(0,10):
+            self.actors.append(Actor('barbarian', 'b', 1, sprite='mercenary', color=TEAM_COLORS[1], x=4, y=i+6, movement=2,
                                      stats=Stats(3,2,0)))
 
 
-        self.actors.append(Actor('king', 'K', 0, sprite='king', color=TEAM_COLORS[0], x=4, y=0,
+        self.actors.append(Actor('king', 'K', 0, sprite='king', color=TEAM_COLORS[0], x=4, y=1,
                                  movement=2, stats=Stats(5,3,4)))
-        self.actors.append(Actor('leader', 'L', 1, sprite='leader', color=TEAM_COLORS[1], x=4, y=9,
+        self.actors.append(Actor('leader', 'L', 1, sprite='leader', color=TEAM_COLORS[1], x=5, y=9,
                                  movement=2, stats=Stats(7,4,2)))
 
         self.actors.append(Actor('Xander', 'S', 2, sprite='xander', color=TEAM_COLORS[2], x=5, y=7,
-                                 movement=10, stats=Stats(7,40,2)))
+                                 movement=5, stats=Stats(7,40,2)))
 
         self.turn_to_take = self.actors.copy()
         self.turn_to_take.sort(key=lambda x: x.stats.mod['agility'], reverse=True)
@@ -95,7 +95,7 @@ class Engine:
         possible_movement = []
         # This is done so tiles can be highlighted in amber for allies
         # and red for enemies
-        actors_position = {(p.x, p.y): p for p in self.actors}
+        actors_position = {Point(p.x, p.y): p for p in self.actors}
 
         if actor.movement_left == 0 and not actor.has_attacked:
 
@@ -105,37 +105,47 @@ class Engine:
 
             for tc in to_check:
 
-                if ((tc.x, tc.y) in actors_position.keys()):
-                    if actors_position[(tc.x, tc.y)].blocks:
-                        if actors_position[(tc.x, tc.y)].team != actor.team:
+                if (tc in actors_position.keys()):
+                    if actors_position[tc].blocks:
+                        if actors_position[tc].team != actor.team:
                             possible_movement.append({'pt': tc, 'valid':'enemy'})
 
             return possible_movement
 
 
-        # compute the possible movement (eliminate the out of bounds movement at the same time)
+        # compute the possible movement (eliminate the out of bounds movement, unwalkable tiles and enemy units tile at the same time)
+        actor_pt = [x for x in actors_position.keys()]
         possible_movement = [{'pt': Point(x+actor.x, y+actor.y), 'prop': self.gamemap.terrain[y+actor.y][x+actor.x].properties}
                              for x in range(-actor.movement_left, actor.movement_left+1)
                              for y in range(-actor.movement_left, actor.movement_left+1)
-                             if (x+actor.x > -1 and x+actor.x < self.gamemap.w
-                             and y+actor.y > -1 and  y+actor.y < self.gamemap.h)
-                             and dst_man(Point(x, y)) <= actor.movement_left]
+                             if (x+actor.x > -1 and x+actor.x < self.gamemap.w          # Out of bounds (x)
+                                 and y+actor.y > -1 and  y+actor.y < self.gamemap.h)    # Out of bounds (y)
+                             and dst_man(Point(x, y)) <= actor.movement_left     # Useless?
+                             and self.gamemap.terrain[y+actor.y][x+actor.x].properties['walkable'] == True # Walkable
+                             and not (Point(x+actor.x, y+actor.y) in actor_pt
+                                      and actors_position[Point(x+actor.x, y+actor.y)].team != actor.team)] # No enemy tiles
 
 
+
+        movement_list = []
+        origin = possible_movement[next((index for (index, d) in enumerate(possible_movement) if d['pt'] == Point(actor.x,actor.y)), None)]
+        recursive_check(origin, possible_movement, actor.movement_left, [], movement_list)
+
+        # Remove duplicated points
+        pt_list = set()
         final_list = []
-        origin = possible_movement[next((index for (index, d) in enumerate(possible_movement) if d["pt"] == Point(actor.x,actor.y)), None)]
-        recursive_check(origin, possible_movement, [], final_list)
+        for pt in movement_list:
+            if pt['pt'] not in pt_list:
+                final_list.append(pt)
+            pt_list.add(pt['pt'])
 
         for pm in final_list:
 
-            x = pm['pt'].x
-            y = pm['pt'].y
-
             pm['valid'] = 'true'
 
-            if ((x, y) in actors_position.keys()):
-                if actors_position[(x, y)].blocks:
-                    if actors_position[(x, y)].team != actor.team:
+            if (pm['pt'] in actors_position.keys()):
+                if actors_position[pm['pt']].blocks:
+                    if actors_position[pm['pt']].team != actor.team:
                         pm['valid'] = 'enemy'
                     else:
                         pm['valid'] = 'false'
@@ -189,6 +199,7 @@ class Engine:
                 self.unit_turn.y = new_coord.y
 
                 self.message_queue.append(message)
+                self.highlighted_cases = self.get_possible_movement(self.unit_turn)
 
             # Attacking an enemy
             elif new_coord.point_in([x['pt'] for x in self.highlighted_cases if x['valid'] == 'enemy']):
@@ -253,7 +264,6 @@ class Engine:
                 self.map_panel.blit(self.spritesheet.get_sprite(tile.sprite), (x * TILE_SIZE_X, y * TILE_SIZE_Y))
 
         # Legal moves
-        self.highlighted_cases = self.get_possible_movement(self.unit_turn)
         for highlight in self.highlighted_cases:
 
             if highlight['valid'] == 'true':
@@ -287,6 +297,7 @@ class Engine:
         if not self.turn_to_take:
             self.turn_to_take = [a for a in self.actors if not a.dead]
             self.turn_to_take.sort(key=lambda x: x.stats.mod['agility'], reverse=True)
+
 
         for event in pygame.event.get():
             if event.type == QUIT:
@@ -322,6 +333,7 @@ class Engine:
                 self.unit_turn = self.turn_to_take.pop(0)
 
             self.unit_turn.new_turn()
+            self.highlighted_cases = self.get_possible_movement(self.unit_turn)
 
     def exit(self):
         pygame.quit()
