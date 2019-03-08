@@ -141,21 +141,23 @@ def get_neighboor(origin, node_list):
     return [x for x in nei if x in node_list]
 
 def BFS(origin, node_list):
-
     final_list = set()
-    visisted_nodes = set()
     queue = []
     queue.append(origin)
-    visisted_nodes.add(origin)
 
     while len(queue) > 0:
         node = queue.pop(0)
         final_list.add(node)
-        visisted_nodes.add(node)
 
         for neighboor in get_neighboor(node, node_list):
-            if neighboor not in visisted_nodes:
+            if neighboor not in final_list:
                 queue.append(neighboor)
 
 
     return final_list
+
+def get_4_connected(origin):
+    return [(origin[0]-1, origin[1]),
+            (origin[0]+1, origin[1]),
+            (origin[0], origin[1]-1),
+            (origin[0], origin[1]+1)]
