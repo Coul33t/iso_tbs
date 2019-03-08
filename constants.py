@@ -42,9 +42,11 @@ SPRITES = {'grass': (0,0),
            'mercenary': (1,3),
            'xander': (1,4),
            'cursor':(2,0),
-           'legal_move': (2,1),
-           'attack_move': (2,2),
-           'current_unit': (2,3)}
+           'current_unit': (2,1),
+           'legal_move': (2,2),
+           'range': (2,3),
+           'enemy': (2,4),
+           'ally': (2,5)}
 
 
 QUIT_KEY = (27, 224)
