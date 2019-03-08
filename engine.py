@@ -1,14 +1,14 @@
 import pygame
 from pygame.locals import *
 
+from collections import deque
 from math import ceil, floor
 
-from tools import dst_euc, dst_man, Point, Spritesheet
+from tools import dst_euc, dst_man, Point, Spritesheet, BFS
 from constants import *
 from ui_shapes import *
 from actor import Actor, Stats
 from gamemap import GameMap
-from tools import recursive_check
 
 DEBUG = False
 
@@ -81,7 +81,7 @@ class Engine:
                                  movement=2, stats=Stats(7,4,2)))
 
         self.actors.append(Actor('Xander', 'S', 2, sprite='xander', color=TEAM_COLORS[2], x=5, y=7,
-                                 movement=7, stats=Stats(7,40,2)))
+                                 movement=10, stats=Stats(7,40,2)))
 
         self.turn_to_take = self.actors.copy()
         self.turn_to_take.sort(key=lambda x: x.stats.mod['agility'], reverse=True)
@@ -127,20 +127,12 @@ class Engine:
 
 
 
-        movement_list = []
         origin = (actor.x,actor.y)
-        recursive_check(origin, possible_movement, actor.movement_left, [], movement_list)
-        # TODO: from tuple to Point
+        movement_list = BFS(origin, possible_movement)
 
-        # Remove duplicated points
-        pt_list = set()
-        final_list = []
-        for pt in movement_list:
-            if pt['pt'] not in pt_list:
-                final_list.append(pt)
-            pt_list.add(pt['pt'])
+        movement_list = [{'pt': Point(x)} for x in movement_list]
 
-        for pm in final_list:
+        for pm in movement_list:
 
             pm['valid'] = 'true'
 
@@ -151,7 +143,7 @@ class Engine:
                     else:
                         pm['valid'] = 'false'
 
-        return final_list
+        return movement_list
 
     def key_check(self, key_info):
         if key_info['key'] in QUIT_KEY:

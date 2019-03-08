@@ -140,11 +140,22 @@ def get_neighboor(origin, node_list):
 
     return [x for x in nei if x in node_list]
 
-def recursive_check(origin, node_list, movement_left, visisted_nodes, final_list):
-    visisted_nodes.append({origin: movement_left})
-    if movement_left > 0:
-        for nei in get_neighboor(origin, node_list):
-            if nei not in [x.keys() for x in visisted_nodes] or visisted_nodes[nei] < movement_left:
-                recursive_check(nei, node_list, movement_left - 1, visisted_nodes, final_list)
+def BFS(origin, node_list):
 
-    final_list.append(origin)
+    final_list = set()
+    visisted_nodes = set()
+    queue = []
+    queue.append(origin)
+    visisted_nodes.add(origin)
+
+    while len(queue) > 0:
+        node = queue.pop(0)
+        final_list.add(node)
+        visisted_nodes.add(node)
+
+        for neighboor in get_neighboor(node, node_list):
+            if neighboor not in visisted_nodes:
+                queue.append(neighboor)
+
+
+    return final_list
