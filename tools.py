@@ -131,9 +131,14 @@ def dst_man(p1, p2=Point(0,0)):
     return abs(p1.x - p2.x) + abs(p1.y - p2.y)
 
 
+def get_4_connected(origin):
+    return [(origin[0]-1, origin[1]),
+            (origin[0]+1, origin[1]),
+            (origin[0], origin[1]-1),
+            (origin[0], origin[1]+1)]
+
 def get_neighboor(origin, node_list):
-    nei = [(origin[0]+x, origin[1]) for x in range(-1,3,2)]
-    nei.extend([(origin[0], origin[1]+y) for y in range(-1,3,2)])
+    nei = get_4_connected(origin)
 
     if set(nei) <= set(node_list):
         return nei
@@ -155,9 +160,3 @@ def BFS(origin, node_list):
 
 
     return final_list
-
-def get_4_connected(origin):
-    return [(origin[0]-1, origin[1]),
-            (origin[0]+1, origin[1]),
-            (origin[0], origin[1]-1),
-            (origin[0], origin[1]+1)]
