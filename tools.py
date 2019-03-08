@@ -132,19 +132,19 @@ def dst_man(p1, p2=Point(0,0)):
 
 
 def get_neighboor(origin, node_list):
-    nei = []
-    for node in node_list:
-        if 0 < dst_man(node['pt'], origin) < 2:
-            nei.append(node)
-    return nei
+    nei = [(origin[0]+x, origin[1]) for x in range(-1,3,2)]
+    nei.extend([(origin[0], origin[1]+y) for y in range(-1,3,2)])
 
-RECURSIVE_DEBUG = False
+    if set(nei) <= set(node_list):
+        return nei
+
+    return [x for x in nei if x in node_list]
+
 def recursive_check(origin, node_list, movement_left, visisted_nodes, final_list):
-    visisted_nodes.append({origin['pt']: movement_left})
+    visisted_nodes.append({origin: movement_left})
     if movement_left > 0:
-        for nei in get_neighboor(origin['pt'], node_list):
-            if nei['prop']['walkable'] and (nei not in [x.keys() for x in visisted_nodes]
-                                            or (visisted_nodes[nei] < movement_left)):
+        for nei in get_neighboor(origin, node_list):
+            if nei not in [x.keys() for x in visisted_nodes] or visisted_nodes[nei] < movement_left:
                 recursive_check(nei, node_list, movement_left - 1, visisted_nodes, final_list)
 
     final_list.append(origin)

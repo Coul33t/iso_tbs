@@ -81,7 +81,7 @@ class Engine:
                                  movement=2, stats=Stats(7,4,2)))
 
         self.actors.append(Actor('Xander', 'S', 2, sprite='xander', color=TEAM_COLORS[2], x=5, y=7,
-                                 movement=5, stats=Stats(7,40,2)))
+                                 movement=7, stats=Stats(7,40,2)))
 
         self.turn_to_take = self.actors.copy()
         self.turn_to_take.sort(key=lambda x: x.stats.mod['agility'], reverse=True)
@@ -115,7 +115,7 @@ class Engine:
 
         # compute the possible movement (eliminate the out of bounds movement, unwalkable tiles and enemy units tile at the same time)
         actor_pt = [x for x in actors_position.keys()]
-        possible_movement = [{'pt': Point(x+actor.x, y+actor.y), 'prop': self.gamemap.terrain[y+actor.y][x+actor.x].properties}
+        possible_movement = [(x+actor.x, y+actor.y)
                              for x in range(-actor.movement_left, actor.movement_left+1)
                              for y in range(-actor.movement_left, actor.movement_left+1)
                              if (x+actor.x > -1 and x+actor.x < self.gamemap.w          # Out of bounds (x)
@@ -128,8 +128,9 @@ class Engine:
 
 
         movement_list = []
-        origin = possible_movement[next((index for (index, d) in enumerate(possible_movement) if d['pt'] == Point(actor.x,actor.y)), None)]
+        origin = (actor.x,actor.y)
         recursive_check(origin, possible_movement, actor.movement_left, [], movement_list)
+        # TODO: from tuple to Point
 
         # Remove duplicated points
         pt_list = set()
