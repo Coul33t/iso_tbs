@@ -4,7 +4,7 @@ from pygame.locals import *
 from collections import deque
 from math import ceil, floor
 
-from tools import dst_euc, dst_man, Point, Spritesheet, BFS
+from tools import dst_euc, dst_man, Point, Spritesheet, BFS, get_4_connected
 from constants import *
 from ui_shapes import *
 from actor import Actor, Stats
@@ -130,6 +130,24 @@ class Engine:
         origin = (actor.x,actor.y)
         movement_list = BFS(origin, possible_movement)
 
+        # Re-add enemies for attack check
+        enemies = set()
+        for tile in movement_list:
+            for enemy_check in get_4_connected(tile):
+                if Point(enemy_check) in actor_pt and actor != actors_position[Point(enemy_check)] and actor.team != actors_position[Point(enemy_check)].team:
+                    enemies.add(enemy_check)
+
+
+        attack_range = set()
+        actor_range = actor.stats.mod['range']
+        for tile in movement_list:
+            to_add = get_4_connected(tile)
+            attack_range.update(to_add)
+        attack_range = (attack_range - movement_list) - enemies
+
+        enemies = list([{'pt': Point(x), 'valid': 'enemy'} for x in enemies])
+        attack_range = list([{'pt': Point(x), 'valid': 'attack'} for x in attack_range])
+
         movement_list = [{'pt': Point(x)} for x in movement_list]
 
         for pm in movement_list:
@@ -138,10 +156,13 @@ class Engine:
 
             if (pm['pt'] in actors_position.keys()):
                 if actors_position[pm['pt']].blocks:
-                    if actors_position[pm['pt']].team != actor.team:
-                        pm['valid'] = 'enemy'
+                    if actors_position[pm['pt']].team == actor.team:
+                        pm['valid'] = 'ally'
                     else:
                         pm['valid'] = 'false'
+
+        movement_list.extend(enemies)
+        movement_list.extend(attack_range)
 
         return movement_list
 
@@ -262,7 +283,11 @@ class Engine:
             if highlight['valid'] == 'true':
                 self.map_panel.blit(self.spritesheet.get_sprite('legal_move'), (highlight['pt'].x * TILE_SIZE_X, highlight['pt'].y * TILE_SIZE_Y))
             elif highlight['valid'] == 'enemy':
-                self.map_panel.blit(self.spritesheet.get_sprite('attack_move'), (highlight['pt'].x * TILE_SIZE_X, highlight['pt'].y * TILE_SIZE_Y))
+                self.map_panel.blit(self.spritesheet.get_sprite('enemy'), (highlight['pt'].x * TILE_SIZE_X, highlight['pt'].y * TILE_SIZE_Y))
+            elif highlight['valid'] == 'attack':
+                self.map_panel.blit(self.spritesheet.get_sprite('range'), (highlight['pt'].x * TILE_SIZE_X, highlight['pt'].y * TILE_SIZE_Y))
+            elif highlight['valid'] == 'ally':
+                self.map_panel.blit(self.spritesheet.get_sprite('ally'), (highlight['pt'].x * TILE_SIZE_X, highlight['pt'].y * TILE_SIZE_Y))
 
         # Actors
         for actor in [a for a in self.actors if not a.dead]:
