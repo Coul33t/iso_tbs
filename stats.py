@@ -25,6 +25,8 @@ class Stats:
         self.base['defence'] = round(strength * 0.15 + agility * 0.2 + intel * 0.05)
 
         self.mod['hp'] = self.base['hp']
+        self.mod['max_hp'] = self.base['max_hp']
+
         self.mod['defence'] = self.base['defence']
 
         self.base['damage'] = self.base[self.main_attribute] if self.main_attribute else ceil(self.base['strength'] / 3)
