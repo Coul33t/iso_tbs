@@ -132,10 +132,39 @@ def dst_man(p1, p2=Point(0,0)):
 
 
 def get_4_connected(origin):
+    if isinstance(origin, Point):
+        return [Point(origin.x-1, origin.y),
+                Point(origin.x+1, origin.y),
+                Point(origin.x, origin.y-1),
+                Point(origin.x, origin.y+1)]
+
     return [(origin[0]-1, origin[1]),
             (origin[0]+1, origin[1]),
             (origin[0], origin[1]-1),
             (origin[0], origin[1]+1)]
+
+def get_ranged_connected(origin, w_range):
+    neigh_list = set()
+    if isinstance(origin, Point):
+        for y in range(-w_range, w_range+1):
+            for x in range(-w_range, w_range+1):
+                if y != 0 or x != 0:
+                    pt = Point(origin.x + x, origin.y + y)
+                    if dst_man(pt, origin) <= w_range:
+                        neigh_list.add(pt)
+  
+    else:
+        for y in range(-w_range, w_range+1):
+            for x in range(-w_range, w_range+1):
+                if y != 0 or x != 0:
+                    pt = Point(origin[0] + x, origin[1] + y)
+                    if dst_man(pt, Point(origin)) <= w_range:
+                        neigh_list.add((origin[0] + x, origin[1] + y))
+    
+    return neigh_list
+
+    
+
 
 def get_neighboor(origin, node_list):
     nei = get_4_connected(origin)
@@ -150,7 +179,7 @@ def BFS(origin, node_list):
     queue = []
     queue.append(origin)
 
-    while len(queue) > 0:
+    while queue:
         node = queue.pop(0)
         final_list.add(node)
 
