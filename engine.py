@@ -4,7 +4,7 @@ from pygame.locals import *
 from collections import deque
 from math import ceil, floor
 
-from tools import dst_euc, dst_man, Point, Spritesheet, BFS, get_4_connected
+from tools import dst_euc, dst_man, Point, Spritesheet, BFS, get_4_connected, get_ranged_connected
 from constants import *
 from ui_shapes import *
 from actor import Actor, Stats
@@ -81,24 +81,25 @@ class Engine:
 
         for i in range(3, 6):
             self.actors.append(Actor('soldier', 's', 0, sprite='soldier', color=TEAM_COLORS[0],
-                                     x=i, y=2, movement=1, stats=Stats(3,3,1)))
+                                     x=i, y=2, movement=1, stats=Stats(3, 3, 1)))
         for i in range(0,10):
             self.actors.append(Actor('barbarian', 'b', 1, sprite='mercenary', color=TEAM_COLORS[1], x=4, y=i+6, movement=2,
-                                     stats=Stats(3,2,0)))
+                                     stats=Stats(3, 2, 0)))
 
 
         self.actors.append(Actor('king', 'K', 0, sprite='king', color=TEAM_COLORS[0], x=4, y=1,
-                                 movement=2, stats=Stats(5,3,4)))
+                                 movement=2, stats=Stats(5, 3, 4)))
         self.actors.append(Actor('leader', 'L', 1, sprite='leader', color=TEAM_COLORS[1], x=5, y=9,
-                                 movement=2, stats=Stats(7,4,2)))
+                                 movement=2, stats=Stats(7, 4, 2)))
 
         self.actors.append(Actor('Xander', 'S', 2, sprite='xander', color=TEAM_COLORS[2], x=5, y=7,
-                                 movement=10, stats=Stats(7,40,2)))
+                                 movement=5, stats=Stats(7, 40, 2)))
 
         self.turn_to_take = self.actors.copy()
         self.turn_to_take.sort(key=lambda x: x.stats.mod['agility'], reverse=True)
         self.unit_turn = self.turn_to_take.pop(0)
         self.unit_turn.new_turn()
+        self.unit_turn.stats.mod['range'] = 3
         self.game_state = 'new_turn'
 
         self.highlighted_cases = self.get_possible_movement(self.unit_turn)
@@ -107,7 +108,7 @@ class Engine:
         possible_movement = []
         # This is done so tiles can be highlighted in amber for allies
         # and red for enemies
-        actors_position = {Point(p.x, p.y): p for p in self.actors}
+        actors_position = {Point(p.x, p.y): p for p in self.actors if not p.dead}
 
         if actor.movement_left == 0 and not actor.has_attacked:
 
@@ -117,16 +118,26 @@ class Engine:
 
             for tc in to_check:
 
-                if (tc in actors_position.keys()):
+                if tc in actors_position.keys():
                     if actors_position[tc].blocks:
                         if actors_position[tc].team != actor.team:
                             possible_movement.append({'pt': tc, 'valid':'enemy'})
+                        if actors_position[tc].team == actor.team:
+                            possible_movement.append({'pt': tc, 'valid':'ally'})
 
+            attack_range = set()
+            w_range = self.unit_turn.stats.mod['range'] 
+            to_add = get_ranged_connected(Point(actor.x, actor.y), w_range)
+            attack_range.update(to_add)
+
+            enemies = list([{'pt': x, 'valid': 'attack'} for x in attack_range])
+            possible_movement.extend(enemies)
             return possible_movement
 
 
         # compute the possible movement (eliminate the out of bounds movement, unwalkable tiles and enemy units tile at the same time)
-        actor_pt = [x for x in actors_position.keys()]
+        actor_pt = list(actors_position.keys())
+
         possible_movement = [(x+actor.x, y+actor.y)
                              for x in range(-actor.movement_left, actor.movement_left+1)
                              for y in range(-actor.movement_left, actor.movement_left+1)
@@ -146,14 +157,14 @@ class Engine:
         enemies = set()
         for tile in movement_list:
             for enemy_check in get_4_connected(tile):
-                if Point(enemy_check) in actor_pt and actor != actors_position[Point(enemy_check)] and actor.team != actors_position[Point(enemy_check)].team:
+                if Point(enemy_check) in actor_pt and not actors_position[Point(enemy_check)].dead and actor != actors_position[Point(enemy_check)]  and actor.team != actors_position[Point(enemy_check)].team:
                     enemies.add(enemy_check)
 
 
         attack_range = set()
-        actor_range = actor.stats.mod['range']
+        w_range = self.unit_turn.stats.mod['range'] 
         for tile in movement_list:
-            to_add = get_4_connected(tile)
+            to_add = get_ranged_connected(tile, w_range)
             attack_range.update(to_add)
         attack_range = (attack_range - movement_list) - enemies
 
@@ -166,7 +177,7 @@ class Engine:
 
             pm['valid'] = 'true'
 
-            if (pm['pt'] in actors_position.keys()):
+            if pm['pt'] in actors_position.keys():
                 if actors_position[pm['pt']].blocks:
                     if actors_position[pm['pt']].team == actor.team:
                         pm['valid'] = 'ally'
@@ -239,10 +250,14 @@ class Engine:
                     self.unit_turn.movement_left = floor(self.unit_turn.movement_left / 2)
 
     def check_under_mouse(self):
-        current_panel = self.mouse_in_panel()
+        mx, my = pygame.mouse.get_pos()
+        mouse_pt = Point(mx, my)
 
         if self.mouse_in_panel() == 'map':
-            pass
+            pos_x, pos_y = self.mouse_coord_to_panel(mouse_pt, MAP_PANEL, to_tile=True)
+            for a in self.actors:
+                if a != self.unit_turn and pos_x == a.x and pos_y == a.y:
+                    return a
 
     def mouse_coord_to_panel(self, coords, panel, to_tile=False):
         if not isinstance(coords, Point):
@@ -346,6 +361,10 @@ class Engine:
             self.map_panel.blit(self.spritesheet.get_sprite('cursor'), (new_x, new_y))
 
         self.render_stats(self.unit_turn, self.stats_panel)
+
+        a = self.check_under_mouse()
+        if a:
+            self.render_stats(a, self.stats_enemy_panel)
 
         self.window.blit(self.map_panel, (MAP_PANEL.pv_x, MAP_PANEL.pv_y))
         self.window.blit(self.stats_panel, (STATS_PANEL.pv_x, STATS_PANEL.pv_y))
