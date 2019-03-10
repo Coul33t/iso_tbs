@@ -1,5 +1,3 @@
-from math import ceil
-
 TILE_SIZE_X = 32
 TILE_SIZE_Y = 32
 
@@ -33,26 +31,26 @@ BUTTONS_PANEL_X = STATS_ENEMY_PANEL_X
 BUTTONS_PANEL_W = STATS_ENEMY_PANEL_W
 
 
-SPRITES = {'grass': (0,0),
-           'water': (0,1),
-           'forest': (0,2),
-           'king': (1,0),
-           'leader': (1,1),
-           'soldier': (1,2),
-           'mercenary': (1,3),
-           'xander': (1,4),
-           'cursor':(2,0),
-           'current_unit': (2,1),
-           'legal_move': (2,2),
-           'range': (2,3),
-           'enemy': (2,4),
-           'ally': (2,5)}
+SPRITES = {'grass':         (0, 0),
+           'water':         (0, 1),
+           'forest':        (0, 2),
+           'king':          (1, 0),
+           'leader':        (1, 1),
+           'soldier':       (1, 2),
+           'mercenary':     (1, 3),
+           'xander':        (1, 4),
+           'cursor':        (2, 0),
+           'current_unit':  (2, 1),
+           'legal_move':    (2, 2),
+           'range':         (2, 3),
+           'enemy':         (2, 4),
+           'ally':          (2, 5)}
 
 
 QUIT_KEY = (27, 224)
 ACTION_KEY = (32,)
-MOVEMENT_KEYS = {93: [0, 0], 90: [0, 1], 89: [-1, 1], 92: [-1, 0], 95: [-1, -1], 96: [0, -1], 97: [1, -1],
-                 94: [1, 0], 91: [1, 1]}
+MOVEMENT_KEYS = {93: [0, 0], 90: [0, 1], 89: [-1, 1], 92: [-1, 0], 95: [-1, -1], 96: [0, -1], 
+                 97: [1, -1], 94: [1, 0], 91: [1, 1]}
 
 TEAM_COLORS = ['blue', 'red', 'green', 'yellow']
 ACTIVE_COLOR = 'green'
