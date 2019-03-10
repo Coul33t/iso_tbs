@@ -21,7 +21,11 @@ class Engine:
         self.message_panel = None
         self.buttons_panel = None
 
+        self.hp_bar = None
+
         self.spritesheet = None
+
+        self.stats_font = None
 
         self.actors = []
         self.turn_to_take = []
@@ -49,18 +53,26 @@ class Engine:
     def init_display(self):
         pygame.init()
 
+        # Window
         self.window = pygame.display.set_mode((WINDOW_SIZE.pv_w, WINDOW_SIZE.pv_h))
+        pygame.display.set_caption('Iso TBS')
+
+        # Panels
         self.map_panel = pygame.Surface((MAP_PANEL.pv_w, MAP_PANEL.pv_h))
         self.stats_panel = pygame.Surface((STATS_PANEL.pv_w, STATS_PANEL.pv_h))
         self.stats_enemy_panel = pygame.Surface((STATS_ENEMY_PANEL.pv_w, STATS_ENEMY_PANEL.pv_h))
         self.message_panel = pygame.Surface((MESSAGE_PANEL.pv_w, MESSAGE_PANEL.pv_h))
         self.buttons_panel = pygame.Surface((BUTTONS_PANEL.pv_w, BUTTONS_PANEL.pv_h))
 
-        pygame.display.set_caption('Iso TBS')
+        # HP Bar
+        self.hp_bar = pygame.Surface((STATS_PANEL.pv_w, TILE_SIZE_Y))
 
+        # Spritesheet loading
         self.spritesheet = Spritesheet('res/spritesheet.png')
         self.spritesheet.load_all_sprites()
 
+        # Font loading
+        self.stats_font = pygame.font.SysFont("monospace", 32)
 
 
     def init_game(self):
@@ -248,6 +260,37 @@ class Engine:
 
         return new_x, new_y
 
+    def render_stats(self, unit, panel):
+        
+        # Name
+        name = unit.name
+        if len(name) > panel.get_rect()[2] / TILE_SIZE_X:
+            name = name[:int(panel.get_rect()[2] / TILE_SIZE_X)-3] + '...'
+        name = self.stats_font.render(f"{name}", 1, (255, 255, 255))
+        panel.blit(name, (0, 0))
+        
+        # HP Bar
+        self.hp_bar.fill((255, 100, 100))
+        w_fill = (unit.stats.mod['hp'] / unit.stats.mod['max_hp']) * self.hp_bar.get_rect()[2]
+        rect_fill = pygame.Rect(0, 0, w_fill, TILE_SIZE_Y)
+        pygame.draw.rect(self.hp_bar, (100, 255, 100), rect_fill)
+        panel.blit(self.hp_bar, (0, TILE_SIZE_Y))
+
+        hp = self.stats_font.render(f"{unit.stats.mod['hp']}/{unit.stats.mod['max_hp']}", 1, (255, 255, 255))
+        panel.blit(hp, (0, TILE_SIZE_Y))
+
+        strength = self.stats_font.render(f"STR: {unit.stats.mod['strength']}", 1, (255, 150, 150))
+        panel.blit(strength, (0, TILE_SIZE_Y*2))
+
+        defence = self.stats_font.render(f"DEF: {unit.stats.mod['defence']}", 1, (150, 150, 150))
+        panel.blit(defence, (panel.get_rect()[2] / 2, TILE_SIZE_Y*2))
+
+        agility = self.stats_font.render(f"AGI: {unit.stats.mod['agility']}", 1, (150, 255, 150))
+        panel.blit(agility, (0, TILE_SIZE_Y*3))
+
+        intelligence = self.stats_font.render(f"INT: {unit.stats.mod['intel']}", 1, (150, 150, 255))
+        panel.blit(intelligence, (0, TILE_SIZE_Y*4))
+
     def render(self):
         # Clean display
         self.window.fill((0, 0, 0))
@@ -294,12 +337,15 @@ class Engine:
             self.map_panel.blit(self.spritesheet.get_sprite(actor.sprite), (actor.x * TILE_SIZE_X, actor.y * TILE_SIZE_Y))
 
         self.map_panel.blit(self.spritesheet.get_sprite('current_unit'), (self.unit_turn.x * TILE_SIZE_X, self.unit_turn.y * TILE_SIZE_Y))
+       
+        # Cursor
         mx, my = pygame.mouse.get_pos()
         mouse_pt = Point(mx, my)
         if mouse_pt.inside(MAP_PANEL):
             new_x, new_y = self.mouse_coord_to_panel(mouse_pt, MAP_PANEL)
             self.map_panel.blit(self.spritesheet.get_sprite('cursor'), (new_x, new_y))
 
+        self.render_stats(self.unit_turn, self.stats_panel)
 
         self.window.blit(self.map_panel, (MAP_PANEL.pv_x, MAP_PANEL.pv_y))
         self.window.blit(self.stats_panel, (STATS_PANEL.pv_x, STATS_PANEL.pv_y))
