@@ -126,7 +126,7 @@ class Engine:
                             possible_movement.append({'pt': tc, 'valid':'ally'})
 
             attack_range = set()
-            w_range = self.unit_turn.stats.mod['range'] 
+            w_range = self.unit_turn.stats.mod['range']
             to_add = get_ranged_connected(Point(actor.x, actor.y), w_range)
             attack_range.update(to_add)
 
@@ -162,7 +162,7 @@ class Engine:
 
 
         attack_range = set()
-        w_range = self.unit_turn.stats.mod['range'] 
+        w_range = self.unit_turn.stats.mod['range']
         for tile in movement_list:
             to_add = get_ranged_connected(tile, w_range)
             attack_range.update(to_add)
@@ -243,11 +243,12 @@ class Engine:
                 other_actor = [a for a in self.actors if Point(a.x, a.y) == new_coord][0]
 
                 # If we're close enough
-                if dst_man(Point(self.unit_turn.x, self.unit_turn.y), Point(other_actor.x, other_actor.y)) == 1:
+                if dst_man(Point(self.unit_turn.x, self.unit_turn.y), Point(other_actor.x, other_actor.y)) <= self.unit_turn.stats.mod['range']:
                     self.message_queue.append(self.unit_turn.attack(other_actor))
 
-                    # The unit lose half (floored) of its remaining movement
-                    self.unit_turn.movement_left = floor(self.unit_turn.movement_left / 2)
+                    # The unit lose 3/4 (floored) of its remaining movement
+                    self.unit_turn.movement_left = floor(self.unit_turn.movement_left / 4)
+                    self.highlighted_cases = self.get_possible_movement(self.unit_turn)
 
     def check_under_mouse(self):
         mx, my = pygame.mouse.get_pos()
@@ -276,14 +277,14 @@ class Engine:
         return new_x, new_y
 
     def render_stats(self, unit, panel):
-        
+
         # Name
         name = unit.name
         if len(name) > panel.get_rect()[2] / TILE_SIZE_X:
             name = name[:int(panel.get_rect()[2] / TILE_SIZE_X)-3] + '...'
         name = self.stats_font.render(f"{name}", 1, (255, 255, 255))
         panel.blit(name, (0, 0))
-        
+
         # HP Bar
         self.hp_bar.fill((255, 100, 100))
         w_fill = (unit.stats.mod['hp'] / unit.stats.mod['max_hp']) * self.hp_bar.get_rect()[2]
@@ -352,7 +353,7 @@ class Engine:
             self.map_panel.blit(self.spritesheet.get_sprite(actor.sprite), (actor.x * TILE_SIZE_X, actor.y * TILE_SIZE_Y))
 
         self.map_panel.blit(self.spritesheet.get_sprite('current_unit'), (self.unit_turn.x * TILE_SIZE_X, self.unit_turn.y * TILE_SIZE_Y))
-       
+
         # Cursor
         mx, my = pygame.mouse.get_pos()
         mouse_pt = Point(mx, my)
